@@ -27,6 +27,7 @@
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
+            transition: background-color 0.5s;
         }
 
         /* --- Layout --- */
@@ -84,6 +85,7 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            z-index: 1;
         }
 
         /* --- The Spark Card (Hero) --- */
@@ -94,6 +96,7 @@
             justify-content: center;
             width: 100%;
             perspective: 1000px;
+            margin-bottom: 20px;
         }
 
         .spark-card {
@@ -142,7 +145,7 @@
 
         /* --- Action Button --- */
         .controls-container {
-            padding: 30px 0 50px 0;
+            padding: 10px 0 30px 0;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -169,6 +172,95 @@
         body.chinese-active .big-btn { background-color: #d33682; box-shadow: 0 6px 15px rgba(211, 54, 130, 0.4); }
         body.chinese-active .mode-btn.active { background-color: #d33682; box-shadow: 0 4px 10px rgba(211, 54, 130, 0.3); }
 
+        /* --- TIMER FOOTER --- */
+        .timer-footer {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 15px;
+            padding: 15px 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            width: 120px;
+            text-align: center;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        
+        .timer-display:hover {
+            background: #f5f5f5;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .timer-btn {
+            background: #eee;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .timer-btn:active { transform: scale(0.9); }
+
+        .btn-start { color: #2ecc71; background: #e8f8f5; }
+        .btn-stop { color: #e74c3c; background: #fdedec; }
+        .btn-snooze { font-size: 0.9rem; width: auto; padding: 0 15px; border-radius: 20px; }
+        .btn-zen { color: #8e44ad; background: #f4ecf7; }
+
+        /* --- ZEN CURTAIN (Blank Screen) --- */
+        #zen-curtain {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: black;
+            z-index: 9999;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        #zen-curtain.active {
+            display: flex;
+        }
+
+        /* The faint timer in Zen Mode */
+        #zen-timer {
+            color: #333; /* Very dark grey - barely visible */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 5rem;
+            font-weight: bold;
+        }
+        
+        #zen-hint {
+            color: #222;
+            margin-top: 20px;
+            font-size: 0.8rem;
+        }
+
         /* --- Animations --- */
         .fade-in {
             animation: fadeIn 0.4s ease-out;
@@ -181,7 +273,7 @@
 
     </style>
 </head>
-<body class="chinese-active"> <!-- Default class -->
+<body class="chinese-active"> 
 
 <header>
     <h1>Writing Spark</h1>
@@ -203,27 +295,58 @@
     <div class="controls-container">
         <button class="big-btn" onclick="getSpark()">✨ Give me an Idea</button>
     </div>
+
+    <!-- TIMER FOOTER -->
+    <div class="timer-footer">
+        <!-- Time Display (Click to edit) -->
+        <div class="timer-display" id="time-display" onclick="editTime()">05:00</div>
+        
+        <div class="timer-controls">
+            <!-- Start/Pause -->
+            <button class="timer-btn btn-start" id="btn-timer-toggle" onclick="toggleTimer()">▶</button>
+            
+            <!-- Snooze (+1m) -->
+            <button class="timer-btn btn-snooze" onclick="snoozeTimer()">+1m</button>
+            
+            <!-- Reset -->
+            <button class="timer-btn" onclick="resetTimer()">↺</button>
+            
+            <!-- Zen Mode -->
+            <button class="timer-btn btn-zen" onclick="toggleZen()">👁️</button>
+        </div>
+    </div>
 </main>
+
+<!-- ZEN CURTAIN OVERLAY -->
+<div id="zen-curtain" onclick="toggleZen()">
+    <div id="zen-timer">05:00</div>
+    <div id="zen-hint">Tap anywhere to wake</div>
+</div>
 
 <!-- Load Sparks Database -->
 <script src="prompts.js"></script>
 
 <script>
     // --- STATE ---
-    let currentMode = 'chinese'; // 'chinese' or 'english'
+    let currentMode = 'chinese';
+    
+    // Timer State
+    let timerDuration = 5 * 60; // 5 minutes in seconds
+    let timeLeft = timerDuration;
+    let timerInterval = null;
+    let isRunning = false;
+    
+    // Sound (Simple Beep Data URI)
+    const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"); // Placeholder, will populate with real beep
 
     // --- INIT ---
     window.onload = function() {
-        // Optional: Immediately show a spark? 
-        // Or keep it clean: "Tap for an idea..."
+        updateTimerDisplay();
     };
 
-    // --- LOGIC ---
-
+    // --- SPARK LOGIC ---
     function setMode(mode) {
         currentMode = mode;
-
-        // UI Updates
         document.getElementById('btn-chinese').classList.remove('active');
         document.getElementById('btn-english').classList.remove('active');
         document.body.classList.remove('chinese-active', 'english-active');
@@ -231,11 +354,8 @@
         document.getElementById('btn-' + mode).classList.add('active');
         document.body.classList.add(mode + '-active');
 
-        // Card Label Update
         const label = document.getElementById('card-label');
         const text = document.getElementById('spark-display');
-        
-        // Reset card state
         text.innerText = "Ready?";
         text.classList.remove('fade-in'); 
         
@@ -251,18 +371,122 @@
             document.getElementById('spark-display').innerText = "Error: prompts.js missing";
             return;
         }
-
         const list = PROMPTS_CONFIG[currentMode];
         const randomSpark = list[Math.floor(Math.random() * list.length)];
-        
         const display = document.getElementById('spark-display');
         
-        // Simple animation reset
         display.classList.remove('fade-in');
-        void display.offsetWidth; // Trigger reflow
+        void display.offsetWidth; 
         display.classList.add('fade-in');
-        
         display.innerText = randomSpark;
+    }
+
+    // --- TIMER LOGIC ---
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
+        const timeString = `${m}:${s}`;
+        
+        document.getElementById('time-display').innerText = timeString;
+        document.getElementById('zen-timer').innerText = timeString;
+    }
+
+    function toggleTimer() {
+        if (isRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    }
+
+    function startTimer() {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('btn-timer-toggle').innerText = "⏸";
+        document.getElementById('btn-timer-toggle').classList.remove('btn-start');
+        
+        timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerDisplay();
+            } else {
+                timerFinished();
+            }
+        }, 1000);
+    }
+
+    function pauseTimer() {
+        isRunning = false;
+        clearInterval(timerInterval);
+        document.getElementById('btn-timer-toggle').innerText = "▶";
+        document.getElementById('btn-timer-toggle').classList.add('btn-start');
+    }
+
+    function resetTimer() {
+        pauseTimer();
+        timeLeft = timerDuration;
+        updateTimerDisplay();
+    }
+
+    function snoozeTimer() {
+        timeLeft += 60; // Add 1 minute
+        updateTimerDisplay();
+        if (!isRunning) startTimer(); // Auto start on snooze
+    }
+
+    function editTime() {
+        if (isRunning) return;
+        const newTime = prompt("Enter timer minutes:", Math.floor(timerDuration / 60));
+        if (newTime && !isNaN(newTime)) {
+            timerDuration = parseInt(newTime) * 60;
+            timeLeft = timerDuration;
+            updateTimerDisplay();
+        }
+    }
+
+    function timerFinished() {
+        // Play sound
+        playChime();
+        
+        // Loop logic: Reset and Restart
+        timeLeft = timerDuration;
+        updateTimerDisplay();
+        // Flash screen logic?
+        // Keep running
+    }
+
+    // --- ZEN MODE ---
+    function toggleZen() {
+        const curtain = document.getElementById('zen-curtain');
+        if (curtain.classList.contains('active')) {
+            curtain.classList.remove('active');
+        } else {
+            curtain.classList.add('active');
+        }
+    }
+
+    // --- AUDIO (Generated Beep) ---
+    // Using a simple oscillator context instead of loading a file for speed
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playChime() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+        oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // Slide up
+        
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
     }
 
 </script>
