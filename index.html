@@ -22,9 +22,10 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh; /* Allow growth */
             box-sizing: border-box;
-            overflow: hidden;
+            overflow-y: auto; /* Enable scrolling */
+            overflow-x: hidden;
             user-select: none;
             -webkit-user-select: none;
             transition: background-color 0.5s;
@@ -86,6 +87,7 @@
             justify-content: center;
             position: relative;
             z-index: 1;
+            padding-bottom: 120px; /* Space for fixed timer */
         }
 
         /* --- The Spark Card (Hero) --- */
@@ -97,6 +99,7 @@
             width: 100%;
             perspective: 1000px;
             margin-bottom: 20px;
+            min-height: 300px; /* Ensure card has space */
         }
 
         .spark-card {
@@ -175,16 +178,20 @@
         /* --- TIMER FOOTER --- */
         .timer-footer {
             background: white;
-            width: 100%;
+            width: 90%;
             max-width: 600px;
-            margin: 0 auto;
             border-radius: 15px;
             padding: 15px 20px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            z-index: 10;
+            z-index: 100;
+            position: fixed; /* Always visible */
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-sizing: border-box;
         }
 
         .timer-display {
