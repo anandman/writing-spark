@@ -28,8 +28,8 @@ This project is hosted on **GitHub Pages**. To update:
 
 ## Credits & License
 
-**Copyright © 2026 Anand (anandman).**
+**Copyright © 2026 Anand Mandapati.**
 
-This project was conceptualized by Anand and generated with the assistance of **Google Gemini**, an AI coding agent.
+This project was conceptualized by Anand Mandapati and generated with the assistance of **Google Gemini**, an AI coding agent.
 
 Licensed under the [MIT License](LICENSE).
