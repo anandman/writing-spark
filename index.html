@@ -26,7 +26,7 @@
             box-sizing: border-box;
             overflow: hidden;
             user-select: none;
-            -webkit-user-select: none; /* Safari/iOS */
+            -webkit-user-select: none;
         }
 
         /* --- Layout --- */
@@ -34,7 +34,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-bottom: 10px;
+            padding-bottom: 20px;
             flex-shrink: 0;
         }
 
@@ -50,13 +50,13 @@
         .mode-switch {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             justify-content: center;
             flex-shrink: 0;
         }
 
         .mode-btn {
-            padding: 8px 20px;
+            padding: 10px 25px;
             border: 2px solid transparent;
             border-radius: 20px;
             background-color: rgba(0,0,0,0.05);
@@ -64,7 +64,7 @@
             color: var(--text-color);
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         .mode-btn.active {
@@ -77,321 +77,194 @@
         main {
             flex: 1;
             width: 100%;
-            max-width: 900px; /* Wider for landscape */
+            max-width: 700px;
             margin: 0 auto;
-            position: relative;
-        }
-
-        /* --- Content Areas --- */
-        .content-area {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-evenly;
-        }
-
-        .content-area.active {
-            display: flex;
-        }
-
-        /* --- Main Display (Text) --- */
-        .display-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* --- The Spark Card (Hero) --- */
+        .card-container {
             flex: 1;
-        }
-
-        .char-text {
-            font-family: var(--font-chinese);
-            font-size: 6rem; /* Slightly smaller for safety */
-            line-height: 1.2;
-            color: #d33682;
-            text-align: center;
-        }
-
-        .english-text {
-            font-size: 1.6rem;
-            line-height: 1.4;
-            color: #2c3e50;
-            padding: 0 20px;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        .counter {
-            font-size: 0.9rem;
-            opacity: 0.4;
-            margin-top: 10px;
-            letter-spacing: 1px;
-        }
-
-        /* --- Controls (Buttons) --- */
-        .controls-container {
-            width: 100%;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 15px;
-            padding-bottom: 20px;
+            justify-content: center;
+            width: 100%;
+            perspective: 1000px;
         }
 
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .nav-btn {
-            background: none;
-            border: 2px solid rgba(0,0,0,0.1);
-            padding: 8px 20px;
-            border-radius: 30px;
-            color: var(--text-color);
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0.6;
-            transition: all 0.2s;
-            font-size: 0.8rem;
-        }
-
-        .nav-btn:hover {
-            opacity: 1;
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-
-        /* Spark Card */
         .spark-card {
             background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             width: 90%;
             max-width: 500px;
-            min-height: 80px;
+            min-height: 250px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: #555;
-            position: relative;
             text-align: center;
+            position: relative;
+            transition: transform 0.2s;
         }
 
         .spark-label {
             position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.6rem;
+            top: 20px;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #bbb;
+            letter-spacing: 2px;
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .spark-text {
+            font-size: 2rem;
+            font-weight: 500;
+            color: #2c3e50;
+            line-height: 1.3;
+            margin-top: 10px;
+        }
+
+        /* Mode-specific styling helpers */
+        .chinese-mode .spark-text {
+            color: #d33682; /* Magenta tint for Chinese mode */
+        }
+        
+        .english-mode .spark-text {
+            color: #268bd2; /* Blue tint for English mode */
+        }
+
+        /* --- Action Button --- */
+        .controls-container {
+            padding: 30px 0 50px 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
         }
 
         .big-btn {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
+            padding: 20px 60px;
+            font-size: 1.3rem;
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(38, 139, 210, 0.4);
-            transition: transform 0.1s;
+            box-shadow: 0 6px 15px rgba(38, 139, 210, 0.4);
+            transition: transform 0.1s, background-color 0.2s;
         }
 
         .big-btn:active {
             transform: scale(0.95);
         }
 
-        /* --- Landscape / Desktop Optimization --- */
-        @media (min-width: 700px) and (orientation: landscape) {
-            .content-area {
-                flex-direction: row;
-                align-items: center;
-                justify-content: center;
-                gap: 40px;
-            }
+        /* Color shifts for buttons based on mode */
+        body.chinese-active .big-btn { background-color: #d33682; box-shadow: 0 6px 15px rgba(211, 54, 130, 0.4); }
+        body.chinese-active .mode-btn.active { background-color: #d33682; box-shadow: 0 4px 10px rgba(211, 54, 130, 0.3); }
 
-            .display-container {
-                flex: 1;
-                margin-bottom: 0;
-                align-items: center; 
-                text-align: center;
-                padding-right: 20px;
-                border-right: 2px solid rgba(0,0,0,0.05);
-            }
-
-            .controls-container {
-                flex: 1;
-                align-items: center;
-                padding-bottom: 0;
-                padding-left: 20px;
-            }
-
-            .char-text { font-size: 7rem; }
-            .english-text { font-size: 1.8rem; text-align: center; }
-            .spark-card { width: 100%; text-align: center; }
+        /* --- Animations --- */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
     </style>
 </head>
-<body>
+<body class="chinese-active"> <!-- Default class -->
 
 <header>
     <h1>Writing Spark</h1>
 </header>
 
 <div class="mode-switch">
-    <button class="mode-btn active" id="btn-chinese" onclick="setMode('chinese')">Chinese</button>
-    <button class="mode-btn" id="btn-english" onclick="setMode('english')">English</button>
+    <button class="mode-btn active" id="btn-chinese" onclick="setMode('chinese')">Chinese Sentence</button>
+    <button class="mode-btn" id="btn-english" onclick="setMode('english')">English Story</button>
 </div>
 
 <main>
-    <!-- CHINESE MODE -->
-    <div id="chinese-area" class="content-area active">
-        
-        <div class="display-container">
-            <div class="char-text" id="display-char">?</div>
-            <div class="counter" id="chinese-counter"></div>
-            <div class="nav-buttons">
-                <button class="nav-btn" onclick="prevCharacter()">&larr; Prev</button>
-                <button class="nav-btn" onclick="nextCharacter()">Next &rarr;</button>
-            </div>
-        </div>
-
-        <div class="controls-container">
-            <div class="spark-card">
-                <span class="spark-label">Sentence Idea</span>
-                <span id="chinese-spark-text">...</span>
-            </div>
-            <button class="big-btn" onclick="nextChineseSpark()">Get a Spark ✨</button>
+    <div class="card-container">
+        <div class="spark-card" id="main-card">
+            <span class="spark-label" id="card-label">Sentence Expander</span>
+            <div class="spark-text" id="spark-display">Tap the button for an idea...</div>
         </div>
     </div>
 
-    <!-- ENGLISH MODE -->
-    <div id="english-area" class="content-area">
-        
-        <div class="display-container">
-            <div class="english-text" id="display-english">Loading...</div>
-            <div class="counter" id="english-counter"></div>
-            <div class="nav-buttons">
-                <button class="nav-btn" onclick="prevEnglishPrompt()">&larr; Prev</button>
-                <button class="nav-btn" onclick="nextEnglishPrompt()">Next &rarr;</button>
-            </div>
-        </div>
-
-        <div class="controls-container">
-            <div class="spark-card">
-                <span class="spark-label">Writer's Block Helper</span>
-                <span id="english-spark-text">...</span>
-            </div>
-            <button class="big-btn" onclick="nextEnglishSpark()">Get a Spark ✨</button>
-        </div>
+    <div class="controls-container">
+        <button class="big-btn" onclick="getSpark()">✨ Give me an Idea</button>
     </div>
 </main>
 
-<!-- Load External Data -->
+<!-- Load Sparks Database -->
 <script src="prompts.js"></script>
-<script src="data.js"></script>
 
 <script>
     // --- STATE ---
-    let chineseList = [];
-    let englishList = [];
-    let chineseIndex = 0;
-    let englishIndex = 0;
+    let currentMode = 'chinese'; // 'chinese' or 'english'
 
     // --- INIT ---
     window.onload = function() {
-        loadData();
-        setMode('chinese'); 
+        // Optional: Immediately show a spark? 
+        // Or keep it clean: "Tap for an idea..."
     };
 
-    function loadData() {
-        if (typeof USER_DATA !== 'undefined') {
-            chineseList = USER_DATA.chineseWords || [];
-            const rawEnglish = USER_DATA.englishPrompts || USER_DATA.englishPrompt;
-            englishList = Array.isArray(rawEnglish) ? rawEnglish : [rawEnglish];
-        } else {
-            console.error("data.js not loaded");
-            chineseList = ["Error loading data.js"];
-            englishList = ["Error loading data.js"];
-        }
-        updateUI();
-    }
-
     // --- LOGIC ---
+
     function setMode(mode) {
+        currentMode = mode;
+
+        // UI Updates
         document.getElementById('btn-chinese').classList.remove('active');
         document.getElementById('btn-english').classList.remove('active');
-        document.getElementById('chinese-area').classList.remove('active');
-        document.getElementById('english-area').classList.remove('active');
+        document.body.classList.remove('chinese-active', 'english-active');
 
         document.getElementById('btn-' + mode).classList.add('active');
-        document.getElementById(mode + '-area').classList.add('active');
-    }
+        document.body.classList.add(mode + '-active');
 
-    function updateUI() {
-        if (chineseList.length > 0) {
-            document.getElementById('display-char').innerText = chineseList[chineseIndex];
-            document.getElementById('chinese-counter').innerText = (chineseIndex + 1) + " / " + chineseList.length;
+        // Card Label Update
+        const label = document.getElementById('card-label');
+        const text = document.getElementById('spark-display');
+        
+        // Reset card state
+        text.innerText = "Ready?";
+        text.classList.remove('fade-in'); 
+        
+        if (mode === 'chinese') {
+            label.innerText = "Sentence Expander";
+        } else {
+            label.innerText = "Story Helper";
         }
-        if (englishList.length > 0) {
-            document.getElementById('display-english').innerText = englishList[englishIndex];
-            document.getElementById('english-counter').innerText = (englishIndex + 1) + " / " + englishList.length;
+    }
+
+    function getSpark() {
+        if (typeof PROMPTS_CONFIG === 'undefined') {
+            document.getElementById('spark-display').innerText = "Error: prompts.js missing";
+            return;
         }
-    }
 
-    // --- INTERACTIONS ---
-    function nextCharacter() {
-        if (chineseList.length === 0) return;
-        chineseIndex = (chineseIndex + 1) % chineseList.length;
-        updateUI();
-        document.getElementById('chinese-spark-text').innerText = "...";
-    }
-
-    function prevCharacter() {
-        if (chineseList.length === 0) return;
-        chineseIndex = (chineseIndex - 1 + chineseList.length) % chineseList.length;
-        updateUI();
-        document.getElementById('chinese-spark-text').innerText = "...";
-    }
-
-    function nextEnglishPrompt() {
-        if (englishList.length === 0) return;
-        englishIndex = (englishIndex + 1) % englishList.length;
-        updateUI();
-        document.getElementById('english-spark-text').innerText = "...";
-    }
-
-    function prevEnglishPrompt() {
-        if (englishList.length === 0) return;
-        englishIndex = (englishIndex - 1 + englishList.length) % englishList.length;
-        updateUI();
-        document.getElementById('english-spark-text').innerText = "...";
-    }
-
-    function nextChineseSpark() {
-        if (typeof PROMPTS_CONFIG === 'undefined') return;
-        const list = PROMPTS_CONFIG.chinese;
+        const list = PROMPTS_CONFIG[currentMode];
         const randomSpark = list[Math.floor(Math.random() * list.length)];
-        document.getElementById('chinese-spark-text').innerText = randomSpark;
+        
+        const display = document.getElementById('spark-display');
+        
+        // Simple animation reset
+        display.classList.remove('fade-in');
+        void display.offsetWidth; // Trigger reflow
+        display.classList.add('fade-in');
+        
+        display.innerText = randomSpark;
     }
 
-    function nextEnglishSpark() {
-        if (typeof PROMPTS_CONFIG === 'undefined') return;
-        const list = PROMPTS_CONFIG.english;
-        const randomSpark = list[Math.floor(Math.random() * list.length)];
-        document.getElementById('english-spark-text').innerText = randomSpark;
-    }
 </script>
 
 </body>
