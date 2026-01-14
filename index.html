@@ -9,7 +9,7 @@
             --bg-color: #fdf6e3;
             --text-color: #586e75;
             --accent-color: #268bd2;
-            --button-bg: #eee8d5;
+            --timer-color: #e74c3c; /* The classic Red Disk color */
             --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             --font-chinese: 'KaiTi', '楷体', 'STKaiti', 'SimKai', sans-serif;
         }
@@ -22,33 +22,24 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            min-height: 100vh; /* Allow growth */
+            min-height: 100vh;
             box-sizing: border-box;
-            overflow-y: auto; /* Enable scrolling */
-            overflow-x: hidden;
+            overflow-y: auto;
             user-select: none;
             -webkit-user-select: none;
             transition: background-color 0.5s;
         }
 
-        /* --- Layout --- */
         header {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
             flex-shrink: 0;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 1.2rem;
-            opacity: 0.5;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+        h1 { margin: 0; font-size: 1.2rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- Mode Switcher --- */
         .mode-switch {
             display: flex;
             gap: 10px;
@@ -58,7 +49,7 @@
         }
 
         .mode-btn {
-            padding: 10px 25px;
+            padding: 8px 20px;
             border: 2px solid transparent;
             border-radius: 20px;
             background-color: rgba(0,0,0,0.05);
@@ -66,7 +57,6 @@
             color: var(--text-color);
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 1rem;
         }
 
         .mode-btn.active {
@@ -75,54 +65,61 @@
             box-shadow: 0 4px 10px rgba(38, 139, 210, 0.3);
         }
 
-        /* --- Main Container --- */
+        /* --- MAIN LAYOUT (Responsive) --- */
         main {
             flex: 1;
             width: 100%;
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
+            gap: 40px;
             align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 1;
-            padding-bottom: 120px; /* Space for fixed timer */
         }
 
-        /* --- The Spark Card (Hero) --- */
-        .card-container {
-            flex: 1;
+        /* Landscape iPad Layout */
+        @media (min-width: 700px) and (orientation: landscape) {
+            main {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            .spark-section { flex: 3; }
+            .timer-section { flex: 2; margin-top: 20px;}
+        }
+
+        /* --- LEFT COLUMN: SPARK --- */
+        .spark-section {
+            width: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+        }
+
+        .card-container {
             width: 100%;
             perspective: 1000px;
             margin-bottom: 20px;
-            min-height: 300px; /* Ensure card has space */
         }
 
         .spark-card {
             background: white;
-            padding: 40px;
+            padding: 30px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            width: 90%;
-            max-width: 500px;
-            min-height: 250px;
+            min-height: 200px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             position: relative;
-            transition: transform 0.2s;
         }
 
         .spark-label {
             position: absolute;
             top: 20px;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: #aaa;
@@ -130,153 +127,134 @@
         }
 
         .spark-text {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 500;
             color: #2c3e50;
             line-height: 1.3;
             margin-top: 10px;
         }
 
-        /* Mode-specific styling helpers */
-        .chinese-mode .spark-text {
-            color: #d33682; /* Magenta tint for Chinese mode */
-        }
-        
-        .english-mode .spark-text {
-            color: #268bd2; /* Blue tint for English mode */
-        }
-
-        /* --- Action Button --- */
-        .controls-container {
-            padding: 10px 0 30px 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
+        .chinese-mode .spark-text { color: #d33682; }
+        .english-mode .spark-text { color: #268bd2; }
 
         .big-btn {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 20px 60px;
-            font-size: 1.3rem;
+            padding: 15px 40px;
+            font-size: 1.1rem;
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 6px 15px rgba(38, 139, 210, 0.4);
-            transition: transform 0.1s, background-color 0.2s;
+            transition: transform 0.1s;
         }
-
-        .big-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Color shifts for buttons based on mode */
+        .big-btn:active { transform: scale(0.95); }
         body.chinese-active .big-btn { background-color: #d33682; box-shadow: 0 6px 15px rgba(211, 54, 130, 0.4); }
-        body.chinese-active .mode-btn.active { background-color: #d33682; box-shadow: 0 4px 10px rgba(211, 54, 130, 0.3); }
 
-        /* --- TIMER FOOTER --- */
-        .timer-footer {
-            background: white;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 15px;
-            padding: 15px 20px;
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+        /* --- RIGHT COLUMN: VISUAL TIMER --- */
+        .timer-section {
+            width: 100%;
+            max-width: 300px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            z-index: 100;
-            position: fixed; /* Always visible */
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-sizing: border-box;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
         }
 
-        .timer-display {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-            width: 120px;
-            text-align: center;
-            border-radius: 5px;
-            transition: background 0.2s;
+        /* SVG Container */
+        .timer-visual {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            margin-bottom: 20px;
+            cursor: pointer; /* Click to edit time */
         }
-        
-        .timer-display:hover {
-            background: #f5f5f5;
+
+        /* The Clock Face */
+        .timer-face {
+            fill: #f0f0f0;
+            stroke: #ddd;
+            stroke-width: 1;
+        }
+
+        /* The Red Wedge */
+        #timer-wedge {
+            fill: var(--timer-color);
+            transition: d 0.5s linear; /* Smooth transition for the shape */
+        }
+
+        /* Center Dot */
+        .timer-center {
+            fill: #555;
+        }
+
+        .timer-digital {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #888;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            cursor: pointer;
         }
 
         .timer-controls {
             display: flex;
-            gap: 10px;
-            align-items: center;
+            gap: 15px;
         }
 
         .timer-btn {
-            background: #eee;
             border: none;
             border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            font-size: 1.2rem;
+            width: 50px;
+            height: 50px;
+            font-size: 1.4rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s;
+            transition: transform 0.1s;
         }
-
         .timer-btn:active { transform: scale(0.9); }
 
-        .btn-start { color: #2ecc71; background: #e8f8f5; }
-        .btn-stop { color: #e74c3c; background: #fdedec; }
-        .btn-snooze { font-size: 0.9rem; width: auto; padding: 0 15px; border-radius: 20px; }
-        .btn-zen { color: #8e44ad; background: #f4ecf7; }
+        .btn-start { background: #e8f8f5; color: #2ecc71; }
+        .btn-stop { background: #fdedec; color: #e74c3c; }
+        .btn-snooze { background: #eee; font-size: 0.9rem; border-radius: 10px; width: auto; padding: 0 15px; }
+        .btn-zen { background: #2c3e50; color: #f1c40f; }
 
-        /* --- ZEN CURTAIN (Blank Screen) --- */
+        /* --- ZEN MODE OVERLAY --- */
         #zen-curtain {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: black;
+            background: #000;
             z-index: 9999;
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
         }
 
-        #zen-curtain.active {
-            display: flex;
-        }
+        #zen-curtain.active { display: flex; }
 
-        /* The faint timer in Zen Mode */
-        #zen-timer {
-            color: #333; /* Very dark grey - barely visible */
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 5rem;
-            font-weight: bold;
+        #zen-curtain .timer-visual {
+            width: 80vmin; /* Big on screen */
+            height: 80vmin;
+            margin: 0;
+            pointer-events: none;
         }
         
-        #zen-hint {
-            color: #222;
-            margin-top: 20px;
-            font-size: 0.8rem;
-        }
+        #zen-curtain .timer-face { fill: #050505; stroke: #111; } /* Very dark face */
+        #zen-curtain #timer-wedge { fill: #ff0000; opacity: 0.1; } /* Extremely dim red */
 
-        /* --- Animations --- */
-        .fade-in {
-            animation: fadeIn 0.4s ease-out;
-        }
+        #zen-hint { color: #222; margin-top: 20px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     </style>
 </head>
@@ -292,60 +270,72 @@
 </div>
 
 <main>
-    <div class="card-container">
-        <div class="spark-card" id="main-card">
-            <span class="spark-label" id="card-label">Sentence Expander</span>
-            <div class="spark-text" id="spark-display">Tap the button for an idea...</div>
+    <!-- Left: Spark Card -->
+    <div class="spark-section">
+        <div class="card-container">
+            <div class="spark-card" id="main-card">
+                <span class="spark-label" id="card-label">Sentence Expander</span>
+                <div class="spark-text" id="spark-display">Tap button for an idea...</div>
+            </div>
         </div>
-    </div>
-
-    <div class="controls-container">
         <button class="big-btn" onclick="getSpark()">✨ Give me an Idea</button>
     </div>
 
-    <!-- TIMER FOOTER -->
-    <div class="timer-footer">
-        <!-- Time Display (Click to edit) -->
-        <div class="timer-display" id="time-display" onclick="editTime()">05:00</div>
+    <!-- Right: Visual Timer -->
+    <div class="timer-section">
         
+        <!-- The SVG Graphic -->
+        <div class="timer-visual" id="visual-timer-container" onclick="editTime()">
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+                <!-- Clock Face -->
+                <circle cx="50" cy="50" r="48" class="timer-face" />
+                <!-- The Red Wedge (Dynamic) -->
+                <path id="timer-wedge" d="M 50 50 L 50 2 A 48 48 0 0 1 50 2 Z" />
+                <!-- Center Dot -->
+                <circle cx="50" cy="50" r="3" class="timer-center" />
+                <!-- Tick Marks (Optional) -->
+                <line x1="50" y1="2" x2="50" y2="6" stroke="#ccc" stroke-width="1" />
+                <line x1="98" y1="50" x2="94" y2="50" stroke="#ccc" stroke-width="1" />
+                <line x1="50" y1="98" x2="50" y2="94" stroke="#ccc" stroke-width="1" />
+                <line x1="2" y1="50" x2="6" y2="50" stroke="#ccc" stroke-width="1" />
+            </svg>
+        </div>
+
+        <div class="timer-digital" id="digital-timer" onclick="editTime()">05:00</div>
+
         <div class="timer-controls">
-            <!-- Start/Pause -->
             <button class="timer-btn btn-start" id="btn-timer-toggle" onclick="toggleTimer()">▶</button>
-            
-            <!-- Snooze (+1m) -->
             <button class="timer-btn btn-snooze" onclick="snoozeTimer()">+1m</button>
-            
-            <!-- Reset -->
             <button class="timer-btn" onclick="resetTimer()">↺</button>
-            
-            <!-- Zen Mode -->
-            <button class="timer-btn btn-zen" id="btn-zen-toggle" onclick="toggleZen()">🌙</button>
+            <button class="timer-btn btn-zen" onclick="toggleZen()">🌙</button>
         </div>
     </div>
 </main>
 
-<!-- ZEN CURTAIN OVERLAY -->
+<!-- ZEN CURTAIN (Clone of timer for fullscreen) -->
 <div id="zen-curtain" onclick="toggleZen()">
-    <div id="zen-timer">05:00</div>
+    <!-- We will inject a copy of the SVG here dynamically or just mirror properties -->
+    <div id="zen-svg-container" class="timer-visual">
+        <!-- SVG content copied by JS -->
+    </div>
     <div id="zen-hint">Tap anywhere to wake</div>
 </div>
 
-<!-- Load Sparks Database -->
 <script src="prompts.js"></script>
-
 <script>
     // --- STATE ---
     let currentMode = 'chinese';
-    
-    // Timer State
-    let timerDuration = 5 * 60; // 5 minutes in seconds
-    let timeLeft = timerDuration;
+    let timerTotal = 5 * 60; // Total duration set by user (for the circle calculation)
+    let timeLeft = timerTotal;
     let timerInterval = null;
     let isRunning = false;
-    
+
     // --- INIT ---
     window.onload = function() {
-        updateTimerDisplay();
+        updateTimerVisual();
+        // Clone SVG to Zen container once
+        const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
+        document.getElementById('zen-svg-container').innerHTML = originalSvg;
     };
 
     // --- SPARK LOGIC ---
@@ -354,10 +344,9 @@
         document.getElementById('btn-chinese').classList.remove('active');
         document.getElementById('btn-english').classList.remove('active');
         document.body.classList.remove('chinese-active', 'english-active');
-
         document.getElementById('btn-' + mode).classList.add('active');
         document.body.classList.add(mode + '-active');
-
+        
         const label = document.getElementById('card-label');
         const text = document.getElementById('spark-display');
         text.innerText = "Ready?";
@@ -371,37 +360,64 @@
     }
 
     function getSpark() {
-        if (typeof PROMPTS_CONFIG === 'undefined') {
-            document.getElementById('spark-display').innerText = "Error: prompts.js missing";
-            return;
-        }
+        if (typeof PROMPTS_CONFIG === 'undefined') return;
         const list = PROMPTS_CONFIG[currentMode];
         const randomSpark = list[Math.floor(Math.random() * list.length)];
         const display = document.getElementById('spark-display');
-        
         display.classList.remove('fade-in');
         void display.offsetWidth; 
         display.classList.add('fade-in');
         display.innerText = randomSpark;
     }
 
-    // --- TIMER LOGIC ---
+    // --- TIMER LOGIC (Visual) ---
 
-    function updateTimerDisplay() {
+    function getWedgePath(percent) {
+        // percent 0 to 1
+        if (percent >= 0.999) {
+            // Full circle
+            return `M 50 50 L 50 2 A 48 48 0 1 1 49.99 2 Z`;
+        }
+        if (percent <= 0) {
+            return `M 50 50 L 50 2 L 50 2 Z`; // Empty
+        }
+
+        // Calculate angle. 0% = 0 degrees, 100% = 360 degrees.
+        // But visual timers usually shrink counter-clockwise or clockwise.
+        // Standard "Time Timer" shrinks counter-clockwise (removes red).
+        // So we draw a slice of 'percent' size.
+        
+        const degrees = percent * 360;
+        const rad = (degrees - 90) * (Math.PI / 180); // -90 to start at 12 o'clock
+        
+        const x = 50 + 48 * Math.cos(rad);
+        const y = 50 + 48 * Math.sin(rad);
+
+        const largeArc = percent > 0.5 ? 1 : 0;
+        
+        // Draw wedge from center (50,50) to top (50,2), arc to (x,y), back to center
+        return `M 50 50 L 50 2 A 48 48 0 ${largeArc} 1 ${x} ${y} Z`;
+    }
+
+    function updateTimerVisual() {
+        const percent = Math.max(0, timeLeft / timerTotal);
+        const pathData = getWedgePath(percent);
+        
+        // Update both Main and Zen wedges
+        document.getElementById('timer-wedge').setAttribute('d', pathData);
+        
+        // Update Zen clone if exists
+        const zenWedge = document.querySelector('#zen-svg-container #timer-wedge');
+        if (zenWedge) zenWedge.setAttribute('d', pathData);
+
+        // Digital
         const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
-        const timeString = `${m}:${s}`;
-        
-        document.getElementById('time-display').innerText = timeString;
-        document.getElementById('zen-timer').innerText = timeString;
+        document.getElementById('digital-timer').innerText = `${m}:${s}`;
     }
 
     function toggleTimer() {
-        if (isRunning) {
-            pauseTimer();
-        } else {
-            startTimer();
-        }
+        if (isRunning) pauseTimer(); else startTimer();
     }
 
     function startTimer() {
@@ -413,7 +429,7 @@
         timerInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
-                updateTimerDisplay();
+                updateTimerVisual();
             } else {
                 timerFinished();
             }
@@ -429,30 +445,32 @@
 
     function resetTimer() {
         pauseTimer();
-        timeLeft = timerDuration;
-        updateTimerDisplay();
+        timeLeft = timerTotal;
+        updateTimerVisual();
     }
 
     function snoozeTimer() {
-        timeLeft += 60; // Add 1 minute
-        updateTimerDisplay();
-        if (!isRunning) startTimer(); // Auto start on snooze
+        timeLeft += 60; 
+        if (timeLeft > timerTotal) timerTotal = timeLeft; // Expand total if snoozing beyond
+        updateTimerVisual();
+        if (!isRunning) startTimer();
     }
 
     function editTime() {
         if (isRunning) return;
-        const newTime = prompt("Enter timer minutes:", Math.floor(timerDuration / 60));
+        const currentMin = Math.floor(timerTotal / 60);
+        const newTime = prompt("Set Timer (Minutes):", currentMin);
         if (newTime && !isNaN(newTime)) {
-            timerDuration = parseInt(newTime) * 60;
-            timeLeft = timerDuration;
-            updateTimerDisplay();
+            timerTotal = parseInt(newTime) * 60;
+            timeLeft = timerTotal;
+            updateTimerVisual();
         }
     }
 
     function timerFinished() {
         playChime();
-        timeLeft = timerDuration;
-        updateTimerDisplay();
+        timeLeft = timerTotal; // Loop
+        updateTimerVisual();
     }
 
     // --- ZEN MODE ---
@@ -461,19 +479,19 @@
         if (curtain.classList.contains('active')) {
             curtain.classList.remove('active');
         } else {
+            // Refresh the clone to ensure state matches
+            const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
+            document.getElementById('zen-svg-container').innerHTML = originalSvg;
             curtain.classList.add('active');
         }
     }
 
-    // --- AUDIO (Louder & Longer Chime) ---
+    // --- AUDIO ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     function playChime() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
         const now = audioCtx.currentTime;
-        
-        // Play a 3-note sequence twice
         [0, 0.6].forEach(delay => {
             playNote(659.25, now + delay, 0.15); // E5
             playNote(783.99, now + delay + 0.2, 0.15); // G5
@@ -484,17 +502,13 @@
     function playNote(freq, start, duration) {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        
-        osc.type = 'square'; // 'square' is buzzier/louder than 'sine'
+        osc.type = 'square';
         osc.frequency.setValueAtTime(freq, start);
-        
         gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.2, start + 0.05); // Fade in
-        gain.gain.exponentialRampToValueAtTime(0.01, start + duration); // Fade out
-        
+        gain.gain.linearRampToValueAtTime(0.2, start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, start + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        
         osc.start(start);
         osc.stop(start + duration);
     }
