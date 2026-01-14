@@ -312,7 +312,7 @@
             <button class="timer-btn" onclick="resetTimer()">↺</button>
             
             <!-- Zen Mode -->
-            <button class="timer-btn btn-zen" onclick="toggleZen()">👁️</button>
+            <button class="timer-btn btn-zen" id="btn-zen-toggle" onclick="toggleZen()">🌙</button>
         </div>
     </div>
 </main>
@@ -336,9 +336,6 @@
     let timerInterval = null;
     let isRunning = false;
     
-    // Sound (Simple Beep Data URI)
-    const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"); // Placeholder, will populate with real beep
-
     // --- INIT ---
     window.onload = function() {
         updateTimerDisplay();
@@ -446,14 +443,9 @@
     }
 
     function timerFinished() {
-        // Play sound
         playChime();
-        
-        // Loop logic: Reset and Restart
         timeLeft = timerDuration;
         updateTimerDisplay();
-        // Flash screen logic?
-        // Keep running
     }
 
     // --- ZEN MODE ---
@@ -466,27 +458,38 @@
         }
     }
 
-    // --- AUDIO (Generated Beep) ---
-    // Using a simple oscillator context instead of loading a file for speed
+    // --- AUDIO (Louder & Longer Chime) ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     function playChime() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
         
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
-        oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // Slide up
+        const now = audioCtx.currentTime;
         
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        // Play a 3-note sequence twice
+        [0, 0.6].forEach(delay => {
+            playNote(659.25, now + delay, 0.15); // E5
+            playNote(783.99, now + delay + 0.2, 0.15); // G5
+            playNote(1046.50, now + delay + 0.4, 0.3); // C6
+        });
+    }
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+    function playNote(freq, start, duration) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.5);
+        osc.type = 'square'; // 'square' is buzzier/louder than 'sine'
+        osc.frequency.setValueAtTime(freq, start);
+        
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.2, start + 0.05); // Fade in
+        gain.gain.exponentialRampToValueAtTime(0.01, start + duration); // Fade out
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start(start);
+        osc.stop(start + duration);
     }
 
 </script>
