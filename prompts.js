@@ -1,52 +1,98 @@
 // prompts.js - The "Brain" of the operation
-// You can add as many new prompts here as you like.
+// Expanded to ~100+ prompts per category for maximum variety.
 
 const PROMPTS_CONFIG = {
     // CHINESE: Goal = Expand sentences to 15+ characters
-    // Categories allow us to potentially filter, but for now we mix them for variety.
     chinese: [
         // --- 1. The "W" Questions (Expansion) ---
-        "Add a specific time (e.g., 'Last Tuesday at 3 PM').",
-        "Add a location detail (e.g., 'Under the big oak tree').",
+        "Add a specific time (e.g., 'Last Tuesday at 3 PM' / 上周二下午三点).",
+        "Add a location detail (e.g., 'Under the big oak tree' / 在大橡树下).",
         "Explain WHY (Use 'because' / 因为).",
-        "Explain HOW (Use 'carefully' or 'loudly').",
-        "Who else was there? Add a friend or family member.",
-        "Add a duration (How long did it take?).",
+        "Explain HOW (Use 'carefully' / 小心地 or 'loudly' / 大声地).",
+        "Who else was there? Add a friend or family member (朋友或家人).",
+        "Add a duration (How long did it take? / 花了多长时间?).",
+        "When will this happen? (Tomorrow? Next year? / 明天? 明年?).",
+        "Where did you come from before this? (Before... / 之前...).",
+        "Where are you going after this? (After... / 之后...).",
+        "Whose idea was this? (Who suggested it? / 谁的提议?).",
+        "What tool or object did you use? (Use '用'...).",
 
         // --- 2. Sensory Details (Descriptive) ---
-        "Add a color word.",
-        "Describe the sound (loud, quiet, buzzing).",
-        "Describe the temperature (freezing, boiling).",
-        "Is it heavy or light?",
-        "Is it fast or slow?",
-        "Describe the texture (rough, smooth, sticky).",
+        "Add a color word (红色, 蓝色...).",
+        "Describe the sound (吵, 安静, 嗡嗡声...).",
+        "Describe the temperature (冷, 热).",
+        "Is it heavy or light? (重 / 轻).",
+        "Is it fast or slow? (快 / 慢).",
+        "Describe the texture (粗糙, 光滑, 黏).",
+        "Describe the smell (甜, 臭, 新鲜).",
+        "Describe the taste (苦, 辣, 咸).",
+        "Is it bright or dark? (亮 / 暗).",
+        "Is it crowded or empty? (拥挤 / 空).",
+        "Is it messy or clean? (乱 / 干净).",
+        "What is the weather like? (刮风, 下雨).",
 
         // --- 3. Emotional/Opinion (Subjective) ---
-        "Start with 'In my opinion' (我觉得).",
-        "Add an emotion (excited, nervous, bored).",
-        "Was it easy or difficult?",
-        "Did you like it? Why?",
-        "Start with 'Surprisingly' (竟然).",
+        "Start with 'In my opinion' (我觉得 / 在我看来).",
+        "Add an emotion (兴奋, 紧张, 无聊).",
+        "Was it easy or difficult? (容易 / 难).",
+        "Did you like it? Why? (喜欢吗? 为什么?).",
+        "Start with 'Surprisingly' (竟然 / 居然).",
+        "Start with 'Unfortunately' (可惜 / 倒霉).",
+        "Start with 'Luckily' (幸好 / 还好).",
+        "Are you sure about this? (一定 / 可能).",
+        "How important is this? (很重要 / 不重要).",
+        "Does this make you happy or sad? (高兴 / 难过).",
+        "Would you do it again? (再做一次?).",
 
-        // --- 4. Complex Connectors (Structure) ---
+        // --- 4. Grammar & Structure (The "Lego Bricks") ---
         "Use 'Although... but...' (虽然...但是...).",
         "Use 'Not only... but also...' (不但...而且...).",
         "Use 'First... then...' (先...然后...).",
         "Use 'If... then...' (如果...就...).",
         "Use 'As soon as...' (一...就...).",
         "Use 'While' (一边...一边...).",
+        "Use the 'Ba' structure (把... put/move/change).",
+        "Use the 'Bei' structure (被... passive voice).",
+        "Use 'More and more' (越来越...).",
+        "Use 'Compared to' (A 比 B...).",
+        "Use 'Or' in a question (还是) or statement (或者).",
+        "Use 'Even' (连...都...).",
+        "Use 'Both... and...' (又...又...).",
+        "Use 'Because of...' (由于...).",
+        "Use 'Therefore...' (所以...).",
+        "Use a result complement (e.g., 听不懂 - hear but don't understand).",
+        "Use a direction complement (e.g., 跑出去 - run out).",
 
-        // --- 5. Creative/Abstract (For harder words like 'Legislature') ---
-        "Who would use this word? (A teacher? The President?)",
-        "Is this something good or bad?",
-        "Imagine this happened in the future.",
-        "Imagine this happened 100 years ago.",
-        "What is the opposite of this?",
-        "Make the sentence about a mistake someone made.",
-        "Make the sentence about a wish or dream."
+        // --- 5. Adverbs & Modifiers ---
+        "Use 'Extremely' (非常 / 极其).",
+        "Use 'Especially' (特别).",
+        "Use 'Probably' (可能 / 大概).",
+        "Use 'Must' (必须).",
+        "Use 'Never' (从来不 / 从没).",
+        "Use 'Often' (经常).",
+        "Use 'Suddenly' (突然).",
+        "Use 'Finally' (终于).",
+        "Use 'Just' (刚才 / 只是).",
+        "Use 'Already' (已经).",
+
+        // --- 6. Creative/Abstract ---
+        "Who would use this word? (老师? 总统?).",
+        "Is this something good or bad? (好 / 坏).",
+        "Imagine this happened in the future (未来).",
+        "Imagine this happened 100 years ago (一百年前).",
+        "What is the opposite of this? (相反).",
+        "Make the sentence about a mistake someone made (错误).",
+        "Make the sentence about a wish or dream (愿望 / 梦).",
+        "Make it a question (问题).",
+        "Make it a command (命令).",
+        "Pretend you are an animal describing this (动物).",
+        "Pretend you are a robot describing this (机器人).",
+        "Make it sound like a secret (秘密).",
+        "Make it sound like a news report (新闻)."
     ],
 
     // ENGLISH: Goal = Sustain flow for 10-15 sentences
+    // Inspired by Oblique Strategies & Creative Writing Prompts
     english: [
         // --- 1. Transition Words (Flow) ---
         "Start the next sentence with 'However,'.",
@@ -56,6 +102,12 @@ const PROMPTS_CONFIG = {
         "Start the next sentence with 'Meanwhile,'.",
         "Start the next sentence with 'In addition,'.",
         "Start the next sentence with 'Finally,'.",
+        "Start the next sentence with 'Unfortunately,'.",
+        "Start the next sentence with 'Luckilly,'.",
+        "Start the next sentence with 'Despite this,'.",
+        "Start the next sentence with 'Years later,'.",
+        "Start the next sentence with 'At that moment,'.",
+        "Start the next sentence with 'Without warning,'.",
 
         // --- 2. Deepening the Detail (Zoom In) ---
         "Zoom in on a small detail (a button, a sound, a smell).",
@@ -65,6 +117,13 @@ const PROMPTS_CONFIG = {
         "What was happening in the background?",
         "Describe a color you saw.",
         "Describe a sound you heard.",
+        "Describe a smell that triggered a memory.",
+        "Describe the texture of an object nearby.",
+        "What time of day is it?",
+        "Is it hot or cold?",
+        "Is it silent or noisy?",
+        "Describe the floor or the ground.",
+        "Describe the sky.",
 
         // --- 3. Internal Monologue (Thoughts) ---
         "What were you thinking at that exact moment?",
@@ -72,6 +131,12 @@ const PROMPTS_CONFIG = {
         "How did your body feel? (Heart racing? Tired?)",
         "Did you change your mind about anything?",
         "What was the most confusing part?",
+        "What were you afraid of?",
+        "What were you hoping for?",
+        "Did you feel guilty?",
+        "Did you feel proud?",
+        "Were you trying to hide something?",
+        "Who were you missing right then?",
 
         // --- 4. External Perspective (Zoom Out) ---
         "What would someone else say about this?",
@@ -80,14 +145,50 @@ const PROMPTS_CONFIG = {
         "Who helped you?",
         "What did you learn?",
         "How is this different from last time?",
-        
-        // --- 5. Oblique/Creative (The Brian Eno vibe) ---
+        "Who is watching from a distance?",
+        "What are the consequences of this?",
+        "How will you remember this in 10 years?",
+        "What would a stranger think seeing this?",
+        "Where is everyone else?",
+
+        // --- 5. Narrative Twists (Plot) ---
+        "Introduce a new character.",
+        "Something breaks or stops working.",
+        "You realize you forgot something important.",
+        "A secret is revealed.",
+        "Someone tells a lie.",
+        "You find a mysterious object.",
+        "The weather changes suddenly.",
+        "You hear a strange noise.",
+        "You receive a message.",
+        "You have to leave immediately.",
+        "You make a mistake.",
+        "An animal appears.",
+
+        // --- 6. Oblique Strategies (Abstract/Creative) ---
         "Write a very short sentence. (3 words max)",
         "Write a very long sentence.",
         "Ask the reader a question.",
         "Use a metaphor or simile (It was like...).",
         "Repeat a word for emphasis.",
         "Be honest about a mistake.",
-        "What if the opposite happened?"
+        "What if the opposite happened?",
+        "Remove the most important word.",
+        "Don't be afraid of things because they're easy to do.",
+        "Honour thy error as a hidden intention.",
+        "Look closely at the most embarrassing detail.",
+        "Make it ugly.",
+        "Go slowly.",
+        "What would your best friend do?",
+        "What would a child do?",
+        "Use an old word you rarely use.",
+        "Make a list.",
+        "Describe the empty space.",
+        "Listen to the quiet.",
+        "Reverse the order.",
+        "Exaggerate everything.",
+        "Understate everything.",
+        "Make it boring.",
+        "Make it chaotic."
     ]
 };

@@ -197,9 +197,35 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: #888;
-            margin-top: -10px;
+            margin-top: -5px;
             margin-bottom: 15px;
+            transition: all 0.3s;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        /* Editability cues */
+        .timer-section.paused .timer-digital,
+        .timer-section.paused .timer-visual {
             cursor: pointer;
+        }
+        
+        .timer-section.paused .timer-digital {
+            background-color: #f8f9fa;
+            border-color: #e9ecef;
+            color: var(--accent-color);
+        }
+
+        .timer-section.paused .timer-digital::after {
+            content: ' ✎';
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .timer-section.running .timer-digital,
+        .timer-section.running .timer-visual {
+            cursor: default;
         }
 
         .timer-controls {
@@ -333,6 +359,8 @@
     // --- INIT ---
     window.onload = function() {
         updateTimerVisual();
+        // Set initial paused state
+        document.querySelector('.timer-section').classList.add('paused');
         // Clone SVG to Zen container once
         const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
         document.getElementById('zen-svg-container').innerHTML = originalSvg;
@@ -442,6 +470,10 @@
         document.getElementById('btn-timer-toggle').innerText = "⏸";
         document.getElementById('btn-timer-toggle').classList.remove('btn-start');
         
+        const section = document.querySelector('.timer-section');
+        section.classList.remove('paused');
+        section.classList.add('running');
+        
         timerInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
@@ -457,6 +489,10 @@
         clearInterval(timerInterval);
         document.getElementById('btn-timer-toggle').innerText = "▶";
         document.getElementById('btn-timer-toggle').classList.add('btn-start');
+        
+        const section = document.querySelector('.timer-section');
+        section.classList.remove('running');
+        section.classList.add('paused');
     }
 
     function resetTimer() {
@@ -466,8 +502,8 @@
     }
 
     function snoozeTimer() {
-        timeLeft += 60; 
-        if (timeLeft > timerTotal) timerTotal = timeLeft; // Expand total if snoozing beyond
+        timeLeft = Math.min(600, timeLeft + 60); 
+        if (timeLeft > timerTotal) timerTotal = timeLeft; 
         updateTimerVisual();
         if (!isRunning) startTimer();
     }
@@ -475,9 +511,12 @@
     function editTime() {
         if (isRunning) return;
         const currentMin = Math.floor(timerTotal / 60);
-        const newTime = prompt("Set Timer (Minutes):", currentMin);
+        const newTime = prompt("Set Timer (1-10 Minutes):", currentMin);
         if (newTime && !isNaN(newTime)) {
-            timerTotal = parseInt(newTime) * 60;
+            let mins = parseInt(newTime);
+            if (mins > 10) mins = 10;
+            if (mins < 1) mins = 1;
+            timerTotal = mins * 60;
             timeLeft = timerTotal;
             updateTimerVisual();
         }
