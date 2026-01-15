@@ -361,6 +361,11 @@
 
     function getSpark() {
         if (typeof PROMPTS_CONFIG === 'undefined') return;
+
+        // Reset and start timer automatically when getting a new spark
+        resetTimer();
+        startTimer();
+
         const list = PROMPTS_CONFIG[currentMode];
         const randomSpark = list[Math.floor(Math.random() * list.length)];
         const display = document.getElementById('spark-display');
