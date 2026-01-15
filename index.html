@@ -378,8 +378,8 @@
     // --- TIMER LOGIC (Visual) ---
 
     function getWedgePath(percent) {
-        // percent 0 to 1
-        if (percent >= 0.999) {
+        // percent 0 to 1 based on 10 minute scale
+        if (percent >= 1) {
             // Full circle
             return `M 50 50 L 50 2 A 48 48 0 1 1 49.99 2 Z`;
         }
@@ -387,25 +387,36 @@
             return `M 50 50 L 50 2 L 50 2 Z`; // Empty
         }
 
-        // Calculate angle. 0% = 0 degrees, 100% = 360 degrees.
-        // But visual timers usually shrink counter-clockwise or clockwise.
-        // Standard "Time Timer" shrinks counter-clockwise (removes red).
-        // So we draw a slice of 'percent' size.
+        // We want the wedge to occupy the space "before" 12 o'clock.
+        // E.g. 5 mins (50%) = 6 o'clock to 12 o'clock (Left Semicircle).
+        // As time counts down (percent decreases), the wedge shrinks Clockwise.
         
         const degrees = percent * 360;
-        const rad = (degrees - 90) * (Math.PI / 180); // -90 to start at 12 o'clock
+        
+        // Start Angle: We back up 'degrees' from 0 (360).
+        // 0 is Top (12 o'clock). 
+        // In standard trig (0 at 3 o'clock), Top is -90 degrees.
+        // So we want to start at -90 - degrees?
+        // Let's use the explicit conversion:
+        // Angle in "Clock Degrees" (0 at top, CW): (360 - degrees)
+        // Convert to Rads: (Angle - 90) * PI / 180.
+        
+        const startAngleClock = 360 - degrees;
+        const rad = (startAngleClock - 90) * (Math.PI / 180);
         
         const x = 50 + 48 * Math.cos(rad);
         const y = 50 + 48 * Math.sin(rad);
 
         const largeArc = percent > 0.5 ? 1 : 0;
         
-        // Draw wedge from center (50,50) to top (50,2), arc to (x,y), back to center
-        return `M 50 50 L 50 2 A 48 48 0 ${largeArc} 1 ${x} ${y} Z`;
+        // Draw wedge from Center -> StartPoint -> Clockwise Arc to Top -> Center
+        // Top is (50, 2)
+        return `M 50 50 L ${x} ${y} A 48 48 0 ${largeArc} 1 50 2 Z`;
     }
 
     function updateTimerVisual() {
-        const percent = Math.max(0, timeLeft / timerTotal);
+        const VISUAL_SCALE_SEC = 600; // 10 minutes fixed scale
+        const percent = Math.min(1, Math.max(0, timeLeft / VISUAL_SCALE_SEC));
         const pathData = getWedgePath(percent);
         
         // Update both Main and Zen wedges
