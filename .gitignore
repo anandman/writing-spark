@@ -1,0 +1,10 @@
+# Local agent and development notes; synced outside git.
+AGENTS.md
+HANDOFF.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+docs/DEVELOPMENT.md
+.agents/
+.codex/
+*[Ss][Uu][Pp][Ee][Rr][Pp][Oo][Ww][Ee][Rr][Ss]*

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Writing Spark</title>
     <style>
         :root {
@@ -11,7 +11,12 @@
             --accent-color: #268bd2;
             --timer-color: #e74c3c; /* The classic Red Disk color */
             --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            --font-chinese: 'KaiTi', '楷体', 'STKaiti', 'SimKai', sans-serif;
+        }
+
+        button { font-family: inherit; }
+        button:focus-visible, input:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 4px;
         }
 
         body {
@@ -42,6 +47,7 @@
 
         .mode-switch {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
             justify-content: center;
@@ -134,8 +140,8 @@
             margin-top: 10px;
         }
 
-        .chinese-mode .spark-text { color: #d33682; }
-        .english-mode .spark-text { color: #268bd2; }
+        .chinese-active .spark-text { color: #b42a6b; }
+        .english-active .spark-text { color: #1873b0; }
 
         .big-btn {
             background-color: var(--accent-color);
@@ -155,7 +161,8 @@
         /* --- RIGHT COLUMN: VISUAL TIMER --- */
         .timer-section {
             width: 100%;
-            max-width: 300px;
+            max-width: 340px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -172,6 +179,10 @@
             position: relative;
             margin-bottom: 20px;
             cursor: pointer; /* Click to edit time */
+            padding: 0;
+            border: 0;
+            background: transparent;
+            flex-shrink: 0;
         }
 
         /* The Clock Face */
@@ -182,7 +193,7 @@
         }
 
         /* The Red Wedge */
-        #timer-wedge {
+        .timer-wedge {
             fill: var(--timer-color);
             transition: d 0.5s linear; /* Smooth transition for the shape */
         }
@@ -203,6 +214,7 @@
             padding: 4px 8px;
             border-radius: 4px;
             border: 1px solid transparent;
+            background: transparent;
         }
 
         /* Editability cues */
@@ -231,6 +243,8 @@
         .timer-controls {
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .timer-btn {
@@ -252,10 +266,35 @@
         .btn-snooze { background: #eee; font-size: 0.9rem; border-radius: 10px; width: auto; padding: 0 15px; }
         .btn-zen { background: #2c3e50; color: #f1c40f; }
 
+        .sound-btn {
+            margin-top: 15px;
+            padding: 8px 12px;
+            border: 0;
+            border-radius: 8px;
+            background: #f0f0f0;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        #time-dialog {
+            border: 0;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: calc(100vw - 80px);
+            color: var(--text-color);
+        }
+        #time-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+        #time-dialog label { display: block; margin-bottom: 12px; }
+        #timer-minutes { font: inherit; width: 5em; padding: 8px; margin-bottom: 20px; }
+        .dialog-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .dialog-actions button { padding: 10px 18px; cursor: pointer; }
+
         /* --- ZEN MODE OVERLAY --- */
         #zen-curtain {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
+            max-width: none; max-height: none;
+            margin: 0; padding: 0; border: 0;
             background: #000;
             z-index: 9999;
             display: none;
@@ -265,7 +304,8 @@
             cursor: pointer;
         }
 
-        #zen-curtain.active { display: flex; }
+        #zen-curtain[open] { display: flex; }
+        #zen-curtain::backdrop { background: #000; }
 
         #zen-curtain .timer-visual {
             width: 80vmin; /* Big on screen */
@@ -275,12 +315,23 @@
         }
         
         #zen-curtain .timer-face { fill: #050505; stroke: #111; } /* Very dark face */
-        #zen-curtain #timer-wedge { fill: #ff0000; opacity: 0.1; } /* Extremely dim red */
+        #zen-curtain .timer-wedge { fill: #ff0000; opacity: 0.1; } /* Extremely dim red */
+        #zen-curtain .timer-center { fill: #111; }
+        #zen-curtain line { stroke: #111; }
 
-        #zen-hint { color: #222; margin-top: 20px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+        #zen-exit {
+            color: #222; background: transparent; border: 0; padding: 12px;
+            margin-top: 20px; font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 2px; cursor: pointer;
+        }
+        #zen-exit:focus-visible { color: #aaa; }
 
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
 
     </style>
 </head>
@@ -291,8 +342,8 @@
 </header>
 
 <div class="mode-switch">
-    <button class="mode-btn active" id="btn-chinese" onclick="setMode('chinese')">Chinese Sentence</button>
-    <button class="mode-btn" id="btn-english" onclick="setMode('english')">English Story</button>
+    <button class="mode-btn active" id="btn-chinese" aria-pressed="true" onclick="setMode('chinese')">Chinese Sentence</button>
+    <button class="mode-btn" id="btn-english" aria-pressed="false" onclick="setMode('english')">English Story</button>
 </div>
 
 <main>
@@ -301,7 +352,7 @@
         <div class="card-container">
             <div class="spark-card" id="main-card">
                 <span class="spark-label" id="card-label">Sentence Expander</span>
-                <div class="spark-text" id="spark-display">Tap button for an idea...</div>
+                <div class="spark-text" id="spark-display" role="status" aria-live="polite" aria-atomic="true">Tap button for an idea...</div>
             </div>
         </div>
         <button class="big-btn" onclick="getSpark()">✨ Give me an Idea</button>
@@ -311,12 +362,12 @@
     <div class="timer-section">
         
         <!-- The SVG Graphic -->
-        <div class="timer-visual" id="visual-timer-container" onclick="editTime()">
-            <svg viewBox="0 0 100 100" width="100%" height="100%">
+        <button class="timer-visual" id="visual-timer-container" aria-label="Set timer duration" onclick="editTime()">
+            <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true" focusable="false">
                 <!-- Clock Face -->
                 <circle cx="50" cy="50" r="48" class="timer-face" />
                 <!-- The Red Wedge (Dynamic) -->
-                <path id="timer-wedge" d="M 50 50 L 50 2 A 48 48 0 0 1 50 2 Z" />
+                <path class="timer-wedge" d="M 50 50 L 50 2 A 48 48 0 0 1 50 2 Z" />
                 <!-- Center Dot -->
                 <circle cx="50" cy="50" r="3" class="timer-center" />
                 <!-- Tick Marks (Optional) -->
@@ -325,55 +376,84 @@
                 <line x1="50" y1="98" x2="50" y2="94" stroke="#ccc" stroke-width="1" />
                 <line x1="2" y1="50" x2="6" y2="50" stroke="#ccc" stroke-width="1" />
             </svg>
-        </div>
+        </button>
 
-        <div class="timer-digital" id="digital-timer" onclick="editTime()">05:00</div>
+        <button class="timer-digital" id="digital-timer" aria-label="5 minutes remaining. Set timer duration" onclick="editTime()">05:00</button>
 
         <div class="timer-controls">
-            <button class="timer-btn btn-start" id="btn-timer-toggle" onclick="toggleTimer()">▶</button>
-            <button class="timer-btn btn-snooze" onclick="snoozeTimer()">+1m</button>
-            <button class="timer-btn" onclick="resetTimer()">↺</button>
-            <button class="timer-btn btn-zen" onclick="toggleZen()">🌙</button>
+            <button class="timer-btn btn-start" id="btn-timer-toggle" aria-label="Start timer" onclick="toggleTimer()">▶</button>
+            <button class="timer-btn btn-snooze" aria-label="Add one minute" onclick="snoozeTimer()">+1m</button>
+            <button class="timer-btn" aria-label="Reset timer" onclick="resetTimer()">↺</button>
+            <button class="timer-btn btn-zen" id="btn-zen" aria-label="Enter quiet writing mode" aria-haspopup="dialog" aria-controls="zen-curtain" aria-expanded="false" onclick="toggleZen()">🌙</button>
         </div>
+        <button class="sound-btn" id="btn-sound" aria-label="Sound on. Mute timer chime" onclick="toggleSound()">Sound on</button>
     </div>
 </main>
 
-<!-- ZEN CURTAIN (Clone of timer for fullscreen) -->
-<div id="zen-curtain" onclick="toggleZen()">
+<dialog id="time-dialog" aria-labelledby="time-label">
+    <form onsubmit="saveTime(event)">
+        <label id="time-label" for="timer-minutes">Timer length (1–10 minutes)</label>
+        <input id="timer-minutes" type="number" min="1" max="10" step="1" required inputmode="numeric" oninput="this.setCustomValidity('')">
+        <div class="dialog-actions">
+            <button type="button" onclick="document.getElementById('time-dialog').close()">Cancel</button>
+            <button type="submit">Set timer</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Native dialogs keep keyboard focus inside and support Escape to close. -->
+<dialog id="zen-curtain" aria-label="Quiet writing mode" onclick="closeZen()">
     <!-- We will inject a copy of the SVG here dynamically or just mirror properties -->
     <div id="zen-svg-container" class="timer-visual">
         <!-- SVG content copied by JS -->
     </div>
-    <div id="zen-hint">Tap anywhere to wake</div>
-</div>
+    <button id="zen-exit" autofocus aria-label="Exit quiet writing mode">Tap anywhere to wake</button>
+</dialog>
 
 <script src="prompts.js"></script>
 <script>
     // --- STATE ---
     let currentMode = 'chinese';
-    let timerTotal = 5 * 60; // Total duration set by user (for the circle calculation)
+    let timerTotal = 5 * 60; // Duration of each repeating round, in seconds
     let timeLeft = timerTotal;
     let timerInterval = null;
+    let timerDeadline = null;
+    let remainingMs = timerTotal * 1000;
     let isRunning = false;
+    let audioCtx = null;
+    let audioOutput = null;
+    let soundMuted = false;
+    const promptDecks = { chinese: [], english: [] };
+    const lastPrompts = { chinese: null, english: null };
 
     // --- INIT ---
     window.onload = function() {
-        updateTimerVisual();
-        // Set initial paused state
-        document.querySelector('.timer-section').classList.add('paused');
         // Clone SVG to Zen container once
         const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
         document.getElementById('zen-svg-container').innerHTML = originalSvg;
+        updateTimerControls();
+        updateTimerVisual();
+        document.getElementById('zen-curtain').addEventListener('close', () => {
+            document.getElementById('btn-zen').setAttribute('aria-expanded', 'false');
+        });
     };
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) syncTimer();
+    });
+    window.addEventListener('pageshow', () => syncTimer());
 
     // --- SPARK LOGIC ---
     function setMode(mode) {
+        if (mode !== 'chinese' && mode !== 'english') return;
         currentMode = mode;
         document.getElementById('btn-chinese').classList.remove('active');
         document.getElementById('btn-english').classList.remove('active');
         document.body.classList.remove('chinese-active', 'english-active');
         document.getElementById('btn-' + mode).classList.add('active');
         document.body.classList.add(mode + '-active');
+        document.getElementById('btn-chinese').setAttribute('aria-pressed', String(mode === 'chinese'));
+        document.getElementById('btn-english').setAttribute('aria-pressed', String(mode === 'english'));
         
         const label = document.getElementById('card-label');
         const text = document.getElementById('spark-display');
@@ -389,18 +469,51 @@
 
     function getSpark() {
         if (typeof PROMPTS_CONFIG === 'undefined') return;
+        const list = PROMPTS_CONFIG[currentMode];
+        if (!list || !list.length) return;
 
         // Reset and start timer automatically when getting a new spark
         resetTimer();
         startTimer();
 
-        const list = PROMPTS_CONFIG[currentMode];
-        const randomSpark = list[Math.floor(Math.random() * list.length)];
+        const randomSpark = nextPrompt(currentMode, list);
         const display = document.getElementById('spark-display');
         display.classList.remove('fade-in');
         void display.offsetWidth; 
         display.classList.add('fade-in');
-        display.innerText = randomSpark;
+        display.innerText = randomSpark.text;
+    }
+
+    function nextPrompt(mode, list) {
+        if (!list.length) return null;
+        const deck = promptDecks[mode];
+        if (!deck.length) {
+            deck.push(...list);
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        const previous = lastPrompts[mode];
+        // A new card should offer a different way to think whenever possible.
+        let candidates = deck.filter(prompt => prompt.strategy !== previous?.strategy);
+        if (!candidates.length) candidates = deck.filter(prompt => prompt.text !== previous?.text);
+        if (!candidates.length) candidates = deck;
+
+        // Favor fuller categories to keep a mix of approaches available through
+        // the end of the deck. Equal-size categories each get a turn per round.
+        const counts = new Map();
+        for (const prompt of candidates) {
+            counts.set(prompt.strategy, (counts.get(prompt.strategy) || 0) + 1);
+        }
+        const mostRemaining = Math.max(...counts.values());
+        const strategies = [...counts.keys()].filter(strategy => counts.get(strategy) === mostRemaining);
+        const strategy = strategies[Math.floor(Math.random() * strategies.length)];
+        const next = candidates.find(prompt => prompt.strategy === strategy);
+        deck.splice(deck.indexOf(next), 1);
+        lastPrompts[mode] = next;
+        return next;
     }
 
     // --- TIMER LOGIC (Visual) ---
@@ -447,17 +560,14 @@
         const percent = Math.min(1, Math.max(0, timeLeft / VISUAL_SCALE_SEC));
         const pathData = getWedgePath(percent);
         
-        // Update both Main and Zen wedges
-        document.getElementById('timer-wedge').setAttribute('d', pathData);
-        
-        // Update Zen clone if exists
-        const zenWedge = document.querySelector('#zen-svg-container #timer-wedge');
-        if (zenWedge) zenWedge.setAttribute('d', pathData);
+        document.querySelectorAll('.timer-wedge').forEach(wedge => wedge.setAttribute('d', pathData));
 
         // Digital
         const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
-        document.getElementById('digital-timer').innerText = `${m}:${s}`;
+        const digital = document.getElementById('digital-timer');
+        digital.innerText = `${m}:${s}`;
+        digital.setAttribute('aria-label', `${Number(m)} minutes ${Number(s)} seconds remaining. ${isRunning ? 'Pause to change duration' : 'Set timer duration'}`);
     }
 
     function toggleTimer() {
@@ -465,87 +575,150 @@
     }
 
     function startTimer() {
+        // This function is called by the user's start, idea, or +1m button press.
+        enableAudio();
         if (isRunning) return;
+        timerDeadline = Date.now() + remainingMs;
         isRunning = true;
-        document.getElementById('btn-timer-toggle').innerText = "⏸";
-        document.getElementById('btn-timer-toggle').classList.remove('btn-start');
-        
-        const section = document.querySelector('.timer-section');
-        section.classList.remove('paused');
-        section.classList.add('running');
-        
-        timerInterval = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateTimerVisual();
-            } else {
-                timerFinished();
-            }
-        }, 1000);
+        updateTimerControls();
+        updateTimerVisual();
+        // Intervals only refresh the display; the deadline keeps elapsed time.
+        timerInterval = setInterval(syncTimer, 250);
     }
 
-    function pauseTimer() {
+    function syncTimer(now = Date.now(), chime = true) {
+        if (!isRunning) return;
+        if (now >= timerDeadline) {
+            const cycleMs = timerTotal * 1000;
+            const elapsedRounds = Math.floor((now - timerDeadline) / cycleMs) + 1;
+            timerDeadline += elapsedRounds * cycleMs;
+            // Returning from sleep catches up without replaying every missed chime.
+            if (chime) playChime();
+        }
+        remainingMs = Math.max(0, timerDeadline - now);
+        timeLeft = Math.ceil(remainingMs / 1000);
+        updateTimerVisual();
+    }
+
+    function updateTimerControls() {
+        const toggle = document.getElementById('btn-timer-toggle');
+        toggle.innerText = isRunning ? '⏸' : '▶';
+        toggle.setAttribute('aria-label', isRunning ? 'Pause timer' : 'Start timer');
+        toggle.classList.toggle('btn-start', !isRunning);
+        const section = document.querySelector('.timer-section');
+        section.classList.toggle('paused', !isRunning);
+        section.classList.toggle('running', isRunning);
+        // Keep remaining time available to assistive technology while running.
+        for (const id of ['visual-timer-container', 'digital-timer']) {
+            document.getElementById(id).setAttribute('aria-disabled', String(isRunning));
+        }
+        document.getElementById('visual-timer-container').setAttribute('aria-label', isRunning ? 'Pause timer to change duration' : 'Set timer duration');
+    }
+
+    function pauseTimer(chime = true) {
+        syncTimer(Date.now(), chime);
         isRunning = false;
         clearInterval(timerInterval);
-        document.getElementById('btn-timer-toggle').innerText = "▶";
-        document.getElementById('btn-timer-toggle').classList.add('btn-start');
-        
-        const section = document.querySelector('.timer-section');
-        section.classList.remove('running');
-        section.classList.add('paused');
+        timerInterval = null;
+        timerDeadline = null;
+        updateTimerControls();
+        updateTimerVisual();
     }
 
     function resetTimer() {
-        pauseTimer();
+        pauseTimer(false);
         timeLeft = timerTotal;
+        remainingMs = timerTotal * 1000;
         updateTimerVisual();
     }
 
     function snoozeTimer() {
-        timeLeft = Math.min(600, timeLeft + 60); 
+        syncTimer();
+        remainingMs = Math.min(600000, remainingMs + 60000);
+        timeLeft = Math.ceil(remainingMs / 1000);
         if (timeLeft > timerTotal) timerTotal = timeLeft; 
+        if (isRunning) timerDeadline = Date.now() + remainingMs;
         updateTimerVisual();
-        if (!isRunning) startTimer();
+        startTimer();
     }
 
     function editTime() {
         if (isRunning) return;
-        const currentMin = Math.floor(timerTotal / 60);
-        const newTime = prompt("Set Timer (1-10 Minutes):", currentMin);
-        if (newTime && !isNaN(newTime)) {
-            let mins = parseInt(newTime);
-            if (mins > 10) mins = 10;
-            if (mins < 1) mins = 1;
-            timerTotal = mins * 60;
-            timeLeft = timerTotal;
-            updateTimerVisual();
-        }
+        const input = document.getElementById('timer-minutes');
+        input.value = Math.ceil(timerTotal / 60);
+        input.setCustomValidity('');
+        document.getElementById('time-dialog').showModal();
+        input.focus();
+        input.select();
     }
 
-    function timerFinished() {
-        playChime();
-        timeLeft = timerTotal; // Loop
+    function setTimerMinutes(value) {
+        const text = String(value).trim();
+        const minutes = Number(text);
+        if (isRunning || !/^\d+$/.test(text) || !Number.isInteger(minutes) || minutes < 1 || minutes > 10) return false;
+        timerTotal = minutes * 60;
+        timeLeft = timerTotal;
+        remainingMs = timerTotal * 1000;
         updateTimerVisual();
+        return true;
+    }
+
+    function saveTime(event) {
+        event.preventDefault();
+        const input = document.getElementById('timer-minutes');
+        if (!setTimerMinutes(input.value)) {
+            input.setCustomValidity('Enter a whole number from 1 to 10.');
+            input.reportValidity();
+            return;
+        }
+        document.getElementById('time-dialog').close();
     }
 
     // --- ZEN MODE ---
     function toggleZen() {
         const curtain = document.getElementById('zen-curtain');
-        if (curtain.classList.contains('active')) {
-            curtain.classList.remove('active');
+        if (curtain.open) {
+            closeZen();
         } else {
-            // Refresh the clone to ensure state matches
-            const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
-            document.getElementById('zen-svg-container').innerHTML = originalSvg;
-            curtain.classList.add('active');
+            syncTimer();
+            curtain.showModal();
+            document.getElementById('btn-zen').setAttribute('aria-expanded', 'true');
         }
     }
 
+    function closeZen() {
+        document.getElementById('zen-curtain').close();
+    }
+
     // --- AUDIO ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function enableAudio() {
+        if (soundMuted) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        try {
+            if (!audioCtx || audioCtx.state === 'closed') {
+                audioCtx = new AudioContext();
+                audioOutput = audioCtx.createGain();
+                audioOutput.connect(audioCtx.destination);
+            }
+            audioOutput.gain.setValueAtTime(1, audioCtx.currentTime);
+            if (audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+        } catch {
+            // Audio availability must not stop the visual timer.
+        }
+    }
+
+    function toggleSound() {
+        soundMuted = !soundMuted;
+        const button = document.getElementById('btn-sound');
+        button.innerText = soundMuted ? 'Sound off' : 'Sound on';
+        button.setAttribute('aria-label', soundMuted ? 'Sound off. Enable timer chime' : 'Sound on. Mute timer chime');
+        if (soundMuted && audioOutput) audioOutput.gain.setValueAtTime(0, audioCtx.currentTime);
+        if (!soundMuted) enableAudio();
+    }
     
     function playChime() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (soundMuted || !audioCtx || audioCtx.state !== 'running') return;
         const now = audioCtx.currentTime;
         [0, 0.6].forEach(delay => {
             playNote(659.25, now + delay, 0.15); // E5
@@ -563,7 +736,8 @@
         gain.gain.linearRampToValueAtTime(0.2, start + 0.05);
         gain.gain.exponentialRampToValueAtTime(0.01, start + duration);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(audioOutput);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
         osc.start(start);
         osc.stop(start + duration);
     }

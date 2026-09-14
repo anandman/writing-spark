@@ -1,194 +1,123 @@
-// prompts.js - The "Brain" of the operation
-// Expanded to ~100+ prompts per category for maximum variety.
+// Thinking cues for grades 2–4. The child supplies the subject and the sentence.
+// "Your character" and "your word" refer to the child's assignment; the app
+// never collects them. Cards are optional, and some will not fit every task.
+// Keep each cue short and leave out suggested plots or completed sentences.
+// Strategy tags are internal: the interface still shows just one card.
 
 const PROMPTS_CONFIG = {
-    // CHINESE: Goal = Expand sentences to 15+ characters
     chinese: [
-        // --- 1. The "W" Questions (Expansion) ---
-        "Add a specific time (e.g., 'Last Tuesday at 3 PM' / 上周二下午三点).",
-        "Add a location detail (e.g., 'Under the big oak tree' / 在大橡树下).",
-        "Explain WHY (Use 'because' / 因为).",
-        "Explain HOW (Use 'carefully' / 小心地 or 'loudly' / 大声地).",
-        "Who else was there? Add a friend or family member (朋友或家人).",
-        "Add a duration (How long did it take? / 花了多长时间?).",
-        "When will this happen? (Tomorrow? Next year? / 明天? 明年?).",
-        "Where did you come from before this? (Before... / 之前...).",
-        "Where are you going after this? (After... / 之后...).",
-        "Whose idea was this? (Who suggested it? / 谁的提议?).",
-        "What tool or object did you use? (Use '用'...).",
+        // Association
+        { strategy: "association", text: "Think of a word you know that uses this character." },
+        { strategy: "association", text: "What other word does your word remind you of?" },
+        { strategy: "association", text: "What does your word make you think of?" },
+        { strategy: "association", text: "Could your word describe something you know?" },
+        { strategy: "association", text: "Could your word fit something you do?" },
 
-        // --- 2. Sensory Details (Descriptive) ---
-        "Add a color word (红色, 蓝色...).",
-        "Describe the sound (吵, 安静, 嗡嗡声...).",
-        "Describe the temperature (冷, 热).",
-        "Is it heavy or light? (重 / 轻).",
-        "Is it fast or slow? (快 / 慢).",
-        "Describe the texture (粗糙, 光滑, 黏).",
-        "Describe the smell (甜, 臭, 新鲜).",
-        "Describe the taste (苦, 辣, 咸).",
-        "Is it bright or dark? (亮 / 暗).",
-        "Is it crowded or empty? (拥挤 / 空).",
-        "Is it messy or clean? (乱 / 干净).",
-        "What is the weather like? (刮风, 下雨).",
+        // Memory
+        { strategy: "memory", text: "When have you heard someone use your word?" },
+        { strategy: "memory", text: "What have you done that reminds you of your word?" },
+        { strategy: "memory", text: "Does your word remind you of a place you have been?" },
+        { strategy: "memory", text: "Can you remember your word in a story you read?" },
+        { strategy: "memory", text: "Could your word fit something you noticed today?" },
 
-        // --- 3. Emotional/Opinion (Subjective) ---
-        "Start with 'In my opinion' (我觉得 / 在我看来).",
-        "Add an emotion (兴奋, 紧张, 无聊).",
-        "Was it easy or difficult? (容易 / 难).",
-        "Did you like it? Why? (喜欢吗? 为什么?).",
-        "Start with 'Surprisingly' (竟然 / 居然).",
-        "Start with 'Unfortunately' (可惜 / 倒霉).",
-        "Start with 'Luckily' (幸好 / 还好).",
-        "Are you sure about this? (一定 / 可能).",
-        "How important is this? (很重要 / 不重要).",
-        "Does this make you happy or sad? (高兴 / 难过).",
-        "Would you do it again? (再做一次?).",
+        // People
+        { strategy: "people", text: "Who might use your word?" },
+        { strategy: "people", text: "Could your sentence be about someone you know?" },
+        { strategy: "people", text: "What might someone think about your idea?" },
+        { strategy: "people", text: "How might someone feel in your sentence?" },
+        { strategy: "people", text: "What might someone say in your sentence?" },
 
-        // --- 4. Grammar & Structure (The "Lego Bricks") ---
-        "Use 'Although... but...' (虽然...但是...).",
-        "Use 'Not only... but also...' (不但...而且...).",
-        "Use 'First... then...' (先...然后...).",
-        "Use 'If... then...' (如果...就...).",
-        "Use 'As soon as...' (一...就...).",
-        "Use 'While' (一边...一边...).",
-        "Use the 'Ba' structure (把... put/move/change).",
-        "Use the 'Bei' structure (被... passive voice).",
-        "Use 'More and more' (越来越...).",
-        "Use 'Compared to' (A 比 B...).",
-        "Use 'Or' in a question (还是) or statement (或者).",
-        "Use 'Even' (连...都...).",
-        "Use 'Both... and...' (又...又...).",
-        "Use 'Because of...' (由于...).",
-        "Use 'Therefore...' (所以...).",
-        "Use a result complement (e.g., 听不懂 - hear but don't understand).",
-        "Use a direction complement (e.g., 跑出去 - run out).",
+        // Imagination
+        { strategy: "imagination", text: "What if something happened differently than usual?" },
+        { strategy: "imagination", text: "Could your idea happen at a different time?" },
+        { strategy: "imagination", text: "Could your idea happen in another place?" },
+        { strategy: "imagination", text: "What would the opposite be?" },
+        { strategy: "imagination", text: "Could something about your idea be surprising?" },
 
-        // --- 5. Adverbs & Modifiers ---
-        "Use 'Extremely' (非常 / 极其).",
-        "Use 'Especially' (特别).",
-        "Use 'Probably' (可能 / 大概).",
-        "Use 'Must' (必须).",
-        "Use 'Never' (从来不 / 从没).",
-        "Use 'Often' (经常).",
-        "Use 'Suddenly' (突然).",
-        "Use 'Finally' (终于).",
-        "Use 'Just' (刚才 / 只是).",
-        "Use 'Already' (已经).",
+        // Senses
+        { strategy: "senses", text: "Close your eyes. What does your word make you picture?" },
+        { strategy: "senses", text: "What sound might go with your word?" },
+        { strategy: "senses", text: "What color comes to mind with your word?" },
+        { strategy: "senses", text: "Could your word connect to a smell?" },
+        { strategy: "senses", text: "What might something in your sentence feel like to touch?" },
 
-        // --- 6. Creative/Abstract ---
-        "Who would use this word? (老师? 总统?).",
-        "Is this something good or bad? (好 / 坏).",
-        "Imagine this happened in the future (未来).",
-        "Imagine this happened 100 years ago (一百年前).",
-        "What is the opposite of this? (相反).",
-        "Make the sentence about a mistake someone made (错误).",
-        "Make the sentence about a wish or dream (愿望 / 梦).",
-        "Make it a question (问题).",
-        "Make it a command (命令).",
-        "Pretend you are an animal describing this (动物).",
-        "Pretend you are a robot describing this (机器人).",
-        "Make it sound like a secret (秘密).",
-        "Make it sound like a news report (新闻)."
+        // Details
+        { strategy: "details", text: "Where could your idea happen?" },
+        { strategy: "details", text: "When could your idea happen?" },
+        { strategy: "details", text: "Why might it happen?" },
+        { strategy: "details", text: "How might someone do it?" },
+        { strategy: "details", text: "What could happen just before?" },
+
+        // Structure
+        { strategy: "structure", text: "Could you join two thoughts with 'because' (因为)?" },
+        { strategy: "structure", text: "Could you say what happens 'first' (先) and 'then' (然后)?" },
+        { strategy: "structure", text: "Could your sentence ask a question?" },
+        { strategy: "structure", text: "Could you compare two things using 比?" },
+        { strategy: "structure", text: "Could you start with 'I think' (我觉得)?" },
+
+        // Speaking
+        { strategy: "speaking", text: "Try saying your idea out loud." },
+        { strategy: "speaking", text: "How would you explain your idea to someone you know?" },
+        { strategy: "speaking", text: "Say the shortest version of your idea." },
+        { strategy: "speaking", text: "Which part of your idea do you want to tell first?" },
+        { strategy: "speaking", text: "Try saying your idea a different way." }
     ],
 
-    // ENGLISH: Goal = Sustain flow for 10-15 sentences
-    // Inspired by Oblique Strategies & Creative Writing Prompts
     english: [
-        // --- 1. Transition Words (Flow) ---
-        "Start the next sentence with 'However,'.",
-        "Start the next sentence with 'Therefore,'.",
-        "Start the next sentence with 'For instance,'.",
-        "Start the next sentence with 'Suddenly,'.",
-        "Start the next sentence with 'Meanwhile,'.",
-        "Start the next sentence with 'In addition,'.",
-        "Start the next sentence with 'Finally,'.",
-        "Start the next sentence with 'Unfortunately,'.",
-        "Start the next sentence with 'Luckilly,'.",
-        "Start the next sentence with 'Despite this,'.",
-        "Start the next sentence with 'Years later,'.",
-        "Start the next sentence with 'At that moment,'.",
-        "Start the next sentence with 'Without warning,'.",
+        // Association
+        { strategy: "association", text: "What does this part of your story remind you of?" },
+        { strategy: "association", text: "What do you already know about your topic?" },
+        { strategy: "association", text: "What word comes to mind when you think about your story?" },
+        { strategy: "association", text: "What would you like to find out about your story?" },
+        { strategy: "association", text: "What question could your next sentence answer?" },
 
-        // --- 2. Deepening the Detail (Zoom In) ---
-        "Zoom in on a small detail (a button, a sound, a smell).",
-        "Describe the lighting in the scene.",
-        "What was the weather like?",
-        "What were your hands doing?",
-        "What was happening in the background?",
-        "Describe a color you saw.",
-        "Describe a sound you heard.",
-        "Describe a smell that triggered a memory.",
-        "Describe the texture of an object nearby.",
-        "What time of day is it?",
-        "Is it hot or cold?",
-        "Is it silent or noisy?",
-        "Describe the floor or the ground.",
-        "Describe the sky.",
+        // Memory
+        { strategy: "memory", text: "Have you ever felt the way someone in your story feels?" },
+        { strategy: "memory", text: "Does your story remind you of somewhere you have been?" },
+        { strategy: "memory", text: "What have you seen that could help you picture this moment?" },
+        { strategy: "memory", text: "Can you remember hearing someone talk about something like this?" },
+        { strategy: "memory", text: "Could something you noticed today fit your story?" },
 
-        // --- 3. Internal Monologue (Thoughts) ---
-        "What were you thinking at that exact moment?",
-        "What did you want to say but didn't?",
-        "How did your body feel? (Heart racing? Tired?)",
-        "Did you change your mind about anything?",
-        "What was the most confusing part?",
-        "What were you afraid of?",
-        "What were you hoping for?",
-        "Did you feel guilty?",
-        "Did you feel proud?",
-        "Were you trying to hide something?",
-        "Who were you missing right then?",
+        // People
+        { strategy: "people", text: "What does someone in your story want?" },
+        { strategy: "people", text: "What might someone in your story be thinking?" },
+        { strategy: "people", text: "How does someone in your story feel right now?" },
+        { strategy: "people", text: "What could someone in your story say?" },
+        { strategy: "people", text: "How might someone else see the same moment?" },
 
-        // --- 4. External Perspective (Zoom Out) ---
-        "What would someone else say about this?",
-        "Why does this matter?",
-        "How did it end?",
-        "Who helped you?",
-        "What did you learn?",
-        "How is this different from last time?",
-        "Who is watching from a distance?",
-        "What are the consequences of this?",
-        "How will you remember this in 10 years?",
-        "What would a stranger think seeing this?",
-        "Where is everyone else?",
+        // Imagination
+        { strategy: "imagination", text: "What else could happen next?" },
+        { strategy: "imagination", text: "What if someone made a different choice?" },
+        { strategy: "imagination", text: "What if the opposite happened?" },
+        { strategy: "imagination", text: "Could this moment happen in a different place?" },
+        { strategy: "imagination", text: "What might change as time passes?" },
 
-        // --- 5. Narrative Twists (Plot) ---
-        "Introduce a new character.",
-        "Something breaks or stops working.",
-        "You realize you forgot something important.",
-        "A secret is revealed.",
-        "Someone tells a lie.",
-        "You find a mysterious object.",
-        "The weather changes suddenly.",
-        "You hear a strange noise.",
-        "You receive a message.",
-        "You have to leave immediately.",
-        "You make a mistake.",
-        "An animal appears.",
+        // Senses
+        { strategy: "senses", text: "Close your eyes. What can you see in your story?" },
+        { strategy: "senses", text: "What could someone hear in this moment?" },
+        { strategy: "senses", text: "What could someone smell where your story happens?" },
+        { strategy: "senses", text: "What might something in your story feel like to touch?" },
+        { strategy: "senses", text: "What small detail catches your eye?" },
 
-        // --- 6. Oblique Strategies (Abstract/Creative) ---
-        "Write a very short sentence. (3 words max)",
-        "Write a very long sentence.",
-        "Ask the reader a question.",
-        "Use a metaphor or simile (It was like...).",
-        "Repeat a word for emphasis.",
-        "Be honest about a mistake.",
-        "What if the opposite happened?",
-        "Remove the most important word.",
-        "Don't be afraid of things because they're easy to do.",
-        "Honour thy error as a hidden intention.",
-        "Look closely at the most embarrassing detail.",
-        "Make it ugly.",
-        "Go slowly.",
-        "What would your best friend do?",
-        "What would a child do?",
-        "Use an old word you rarely use.",
-        "Make a list.",
-        "Describe the empty space.",
-        "Listen to the quiet.",
-        "Reverse the order.",
-        "Exaggerate everything.",
-        "Understate everything.",
-        "Make it boring.",
-        "Make it chaotic."
+        // Details
+        { strategy: "details", text: "Where exactly is this happening?" },
+        { strategy: "details", text: "When is this happening?" },
+        { strategy: "details", text: "Why did that happen?" },
+        { strategy: "details", text: "How did someone do that?" },
+        { strategy: "details", text: "What happened just before this moment?" },
+
+        // Structure
+        { strategy: "structure", text: "Could your next sentence be a question?" },
+        { strategy: "structure", text: "Could 'because' help you explain something?" },
+        { strategy: "structure", text: "Could 'meanwhile' connect two things happening at once?" },
+        { strategy: "structure", text: "Could you tell what happens first and then what happens next?" },
+        { strategy: "structure", text: "Could you compare something in your story to something else?" },
+
+        // Speaking
+        { strategy: "speaking", text: "Try saying your next sentence out loud." },
+        { strategy: "speaking", text: "How would you tell this part to someone you know?" },
+        { strategy: "speaking", text: "Say the shortest version of what happens next." },
+        { strategy: "speaking", text: "Which part do you want to tell first?" },
+        { strategy: "speaking", text: "Try saying your last idea a different way." }
     ]
 };
