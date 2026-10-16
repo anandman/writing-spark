@@ -4,7 +4,7 @@ A simple writing helper for children in grades 2–4. Type a Chinese character o
 
 For example, **雨** can suggest **下雨 (rain)** and “Write about walking to school on a rainy morning.” The app supplies a starting situation and a word you could use, leaving the sentence to the child.
 
-The built-in collection has 492 ideas across 164 word entries, covering 255 characters including explicit simplified and traditional forms. It is a starter collection of everyday vocabulary, not a complete HSK or Better Immersion curriculum. Unsupported characters or words get a clear message, and **Characters and words with ideas** shows the available inputs. Compound words match as a whole; the app does not substitute ideas for their individual characters. All ideas are local: no AI service, API key, account, or usage costs. Your input is not sent to a service or saved.
+The built-in collection has 492 ideas across 164 word entries, covering 255 characters including explicit simplified and traditional forms. It is a starter collection of everyday vocabulary, not a complete HSK or Better Immersion curriculum. Unsupported characters or words get a clear message, and **Characters and words with ideas** shows the available inputs. Compound words match as a whole; the app does not substitute ideas for their individual characters. All ideas are local: no AI service, API key, account, or usage costs. Missing words and feedback are saved in this browser; nothing is sent automatically.
 
 ## Features
 
@@ -18,6 +18,7 @@ The built-in collection has 492 ideas across 164 word entries, covering 255 char
 *   **Fresh Ideas:** Each character or word has its own shuffled deck. Every idea is shown before that deck repeats, with no immediate repeat. Switching inputs or modes preserves progress until the page reloads. When several words contain a character, suggestions vary between those words when possible.
 *   **English Thinking Cues:** 40 cues across eight strategies: association, memory, people, imagination, senses, details, structure, and speaking. Each new cue uses a different strategy whenever one remains.
 *   **Accessible Controls:** Keyboard controls, zoom support, reduced-motion support, and a sound toggle.
+*   **Feedback for Future Updates:** Missing words are logged automatically. A child can mark an idea **Helpful** or **Didn’t help**, and optionally save a short note. A parent can download the records for a later manual update to the collection.
 
 ## How to Use
 
@@ -31,11 +32,19 @@ The built-in collection has 492 ideas across 164 word entries, covering 255 char
 
 The countdown uses elapsed time, including time spent in another tab. When the browser resumes after a delay, the timer catches up to the current round and plays at most one chime. Browsers may suspend background pages, so sound at the exact deadline is only possible while the page is running.
 
-To use the app entirely offline, download `index.html`, `prompts.js`, and `character-ideas.js` into the same folder and open `index.html` in a browser. The hosted page requires a connection to load initially; it does not install an offline cache.
+To use the app entirely offline, download `index.html`, `prompts.js`, `character-ideas.js`, and `feedback.js` into the same folder and open `index.html` in a browser. The hosted page requires a connection to load initially; it does not install an offline cache.
+
+## Using Feedback to Improve the App
+
+Open **Saved feedback** below the app on the browser/device your child used, then choose **Download report**. Give the downloaded JSON file to a future coding session and ask it to add missing vocabulary and improve ideas using the feedback. The report includes missing-word counts and dates, plus the exact input, suggested word, idea, rating, and optional note. It does not include a child's name or an account identifier.
+
+Ratings save immediately; use **Save note** for an optional note (up to 500 characters). Changing a rating or note updates that displayed idea's response. Getting another idea starts a fresh response. Feedback does not restart the timer. Invalid entries such as Latin letters or punctuation are not logged as missing vocabulary.
+
+Reports require manual sharing; the app does not upload them, sync them across devices, or change its collection automatically. Browser storage keeps them across visits when available. Clearing browser data removes them. If storage is blocked, full, or unreadable, the app keeps new records for the current visit and tells you to download them before closing the page. **Clear saved feedback** asks for confirmation and clears only this app's feedback after you've kept any report you need.
 
 ## Checks
 
-With Node.js installed, run `node --test tests/app.test.cjs` for character and compound-word matching, input validation, composition handling, deck selection, timer, and audio regression checks. No dependencies or build step are required.
+With Node.js installed, run `node --test tests/app.test.cjs` for character and compound-word matching, input validation, composition handling, deck selection, feedback persistence/export data, timer, and audio regression checks. No dependencies or build step are required.
 
 ## Deployment
 

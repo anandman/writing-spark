@@ -11,7 +11,7 @@ const scriptSources = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]
     .map(match => fs.readFileSync(path.join(root, match[1]), 'utf8'));
 
 // Run the real app with a controllable clock and minimal browser/audio adapters.
-function boot({ audio = true, resumeFails = false } = {}) {
+function boot({ audio = true, resumeFails = false, storage = new Map(), storageReadFails = false, storageWriteFails = false } = {}) {
     let now = 0;
     let nextInterval = 0;
     let contextsCreated = 0;
@@ -72,7 +72,24 @@ function boot({ audio = true, resumeFails = false } = {}) {
         }
     }
     const context = vm.createContext({
-        window: { AudioContext: audio ? AudioContext : undefined, addEventListener(name, fn) { events.set(name, fn); } },
+        window: {
+            AudioContext: audio ? AudioContext : undefined,
+            addEventListener(name, fn) { events.set(name, fn); },
+            localStorage: {
+                getItem(key) {
+                    if (storageReadFails) throw new Error('Storage blocked');
+                    return storage.get(key) ?? null;
+                },
+                setItem(key, value) {
+                    if (storageWriteFails) throw new Error('Storage full');
+                    storage.set(key, value);
+                },
+                removeItem(key) {
+                    if (storageWriteFails) throw new Error('Storage blocked');
+                    storage.delete(key);
+                },
+            },
+        },
         document: {
             body: element('body'), hidden: false,
             getElementById: element,
@@ -80,7 +97,10 @@ function boot({ audio = true, resumeFails = false } = {}) {
             querySelectorAll: () => [element('main-wedge'), element('zen-wedge')],
             addEventListener(name, fn) { events.set(name, fn); },
         },
-        Date: { now: () => now },
+        Date: class extends Date {
+            constructor(...args) { super(...(args.length ? args : [now])); }
+            static now() { return now; }
+        },
         setInterval(callback) { intervals.set(++nextInterval, callback); return nextInterval; },
         clearInterval(id) { intervals.delete(id); },
     });
@@ -89,7 +109,7 @@ function boot({ audio = true, resumeFails = false } = {}) {
     run(appSource);
     run('window.onload()');
     return {
-        run, element, notes, events,
+        run, element, notes, events, storage,
         character(value) {
             element('character-input').value = value;
             element('character-input').dispatch('input');
@@ -562,4 +582,118 @@ test('every listed word is available as a complete word in its displayed script'
         assert.equal(new Set(cards.map(card => card.text)).size, cards.length, word);
         for (const card of cards) assert.equal(card.word, word);
     }
+});
+
+test('unknown words are counted and survive reload while invalid and known inputs are excluded', () => {
+    const app = boot();
+    for (const word of ['  学生 ', '学生', '雨天', 'hello', '学 校', '学校']) {
+        app.character(word);
+        app.run('getSpark()');
+        app.elapse(1000);
+    }
+    assert.match(app.element('feedback-summary').innerText, /2 missing/);
+    const reloaded = boot({storage: app.storage});
+    const report = reloaded.run('getFeedbackReport()');
+    assert.equal(report.schemaVersion, 1);
+    assert.equal(report.missingWords.length, 2);
+    assert.equal(report.missingWords.find(record => record.input === '学生').count, 2);
+    assert.equal(report.missingWords.find(record => record.input === '学生').firstSeen, '1970-01-01T00:00:00.000Z');
+    assert.equal(report.missingWords.find(record => record.input === '学生').lastSeen, '1970-01-01T00:00:01.000Z');
+    assert.equal(report.ideaFeedback.length, 0);
+});
+
+test('rating and note updates keep one record with the original idea and leave the timer alone', () => {
+    const app = boot();
+    app.character('学校');
+    app.run('getSpark()');
+    const idea = app.element('spark-display').innerText;
+    app.tick(20000);
+    app.run('rateIdea("helpful")');
+    app.element('feedback-note').value = 'I want an idea about recess. <script>alert(1)</script>';
+    app.run('saveIdeaNote(); rateIdea("not-helpful")');
+    const report = boot({storage: app.storage}).run('getFeedbackReport()');
+    assert.equal(report.ideaFeedback.length, 1);
+    const record = report.ideaFeedback[0];
+    assert.equal(record.input, '学校');
+    assert.equal(record.word, '学校');
+    assert.equal(record.mode, 'chinese');
+    assert.equal(record.idea, idea);
+    assert.equal(record.rating, 'not-helpful');
+    assert.equal(record.note, 'I want an idea about recess. <script>alert(1)</script>');
+    assert.equal(app.element('spark-display').innerText, idea);
+    assert.equal(app.digital(), '04:40');
+    assert.equal(app.intervals(), 1);
+});
+
+test('a new idea or edit resets feedback so it cannot be attached to a stale idea', () => {
+    const app = boot();
+    app.character('学校');
+    app.run('getSpark(); rateIdea("helpful"); getSpark()');
+    assert.equal(app.element('feedback-note').value, '');
+    assert.equal(app.element('feedback-helpful').attributes['aria-pressed'], 'false');
+    app.element('feedback-note').value = 'Another idea please';
+    app.run('saveIdeaNote()');
+    app.character('学生');
+    assert.equal(app.element('idea-feedback').hidden, true);
+    app.run('rateIdea("not-helpful"); saveIdeaNote()');
+    const report = app.run('getFeedbackReport()');
+    assert.equal(report.ideaFeedback.length, 2);
+    assert.notEqual(report.ideaFeedback[0].idea, report.ideaFeedback[1].idea);
+    assert.equal(report.ideaFeedback[1].rating, null);
+    assert.equal(report.ideaFeedback[1].note, 'Another idea please');
+});
+
+test('English feedback has no stale Chinese input and an optional note is bounded', () => {
+    const app = boot();
+    app.character('学校');
+    app.run('getSpark(); setMode("english"); getSpark()');
+    app.element('feedback-note').value = 'x'.repeat(600);
+    app.run('saveIdeaNote()');
+    const record = app.run('getFeedbackReport().ideaFeedback[0]');
+    assert.equal(record.mode, 'english');
+    assert.equal(record.input, '');
+    assert.equal(record.word, '');
+    assert.equal(record.note.length, 500);
+});
+
+test('storage failures keep writing usable and feedback exportable without promising persistence', () => {
+    for (const options of [{storageReadFails: true}, {storageWriteFails: true}]) {
+        const app = boot(options);
+        app.character('学生');
+        app.run('getSpark()');
+        assert.match(app.element('character-error').innerText, /this visit only/i);
+        app.character('学校');
+        app.run('getSpark(); rateIdea("helpful")');
+        assert.match(app.element('feedback-status').innerText, /this visit only/i);
+        const report = app.run('getFeedbackReport()');
+        assert.equal(report.missingWords.length, 1);
+        assert.equal(report.ideaFeedback.length, 1);
+        assert.equal(app.intervals(), 1);
+    }
+});
+
+test('malformed or incompatible saved data is not overwritten and does not break new feedback', () => {
+    for (const value of ['{broken', '{"schemaVersion":2}', '{"schemaVersion":1,"missingWords":[null],"ideaFeedback":[]}']) {
+        const storage = new Map([['writing-spark-feedback-v1', value]]);
+        const app = boot({storage});
+        app.character('学生');
+        app.run('getSpark()');
+        assert.equal(storage.get('writing-spark-feedback-v1'), value);
+        assert.match(app.element('feedback-storage-status').innerText, /this visit only/i);
+        assert.equal(app.run('getFeedbackReport().missingWords.length'), 1);
+    }
+});
+
+test('clearing feedback removes only this app’s records and prevents stale rating updates', () => {
+    const app = boot({storage: new Map([['unrelated', 'keep me']])});
+    app.character('学生');
+    app.run('getSpark()');
+    app.character('学校');
+    app.run('getSpark(); rateIdea("helpful"); clearSavedFeedback()');
+    assert.equal(app.storage.get('unrelated'), 'keep me');
+    assert.equal(app.run('getFeedbackReport().missingWords.length'), 0);
+    assert.equal(boot({storage: app.storage}).run('getFeedbackReport().ideaFeedback.length'), 0);
+    app.run('rateIdea("not-helpful")');
+    assert.equal(app.run('getFeedbackReport().ideaFeedback.length'), 1);
+    assert.equal(app.run('getFeedbackReport().ideaFeedback[0].rating'), 'not-helpful');
 });

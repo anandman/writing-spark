@@ -14,7 +14,7 @@
         }
 
         button { font-family: inherit; }
-        button:focus-visible, input:focus-visible {
+        button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
             outline: 3px solid var(--accent-color);
             outline-offset: 4px;
         }
@@ -167,6 +167,34 @@
         #idea-meaning { display: block; font-size: 0.95rem; }
         #writing-reminder { text-align: center; font-size: 0.9rem; line-height: 1.5; }
 
+        #idea-feedback { width: 100%; text-align: center; font-size: 0.9rem; }
+        #idea-feedback p { margin: 8px 0; line-height: 1.5; }
+        .feedback-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .feedback-buttons button, .feedback-panel button, #save-feedback-note {
+            font: inherit; padding: 10px 14px; min-height: 44px;
+            border: 1px solid #9aa8aa; border-radius: 10px;
+            background: white; color: #35494f; cursor: pointer;
+        }
+        .feedback-buttons button[aria-pressed="true"] { background: #d8eedd; border: 2px solid #347046; }
+        #feedback-note-details { margin-top: 12px; }
+        #feedback-note-details summary, .feedback-panel summary { cursor: pointer; padding: 8px 0; }
+        #feedback-note-details label { display: block; margin: 12px 0 6px; }
+        #feedback-note {
+            box-sizing: border-box; width: 100%; min-height: 90px;
+            font: inherit; line-height: 1.5; padding: 10px;
+            border: 1px solid #9aa8aa; border-radius: 10px; resize: vertical;
+            user-select: text; -webkit-user-select: text;
+        }
+        #save-feedback-note { margin-top: 8px; }
+        .feedback-panel {
+            box-sizing: border-box; width: 100%; max-width: 900px;
+            margin: 24px auto 0; padding: 12px 16px;
+            border: 1px solid #c6bda8; border-radius: 12px;
+            font-size: 0.9rem; line-height: 1.5;
+        }
+        .feedback-panel button:disabled { opacity: 0.5; cursor: default; }
+        #missing-words { max-height: 8em; overflow-y: auto; }
+
         .spark-text {
             font-size: 1.8rem;
             font-weight: 500;
@@ -311,14 +339,14 @@
             cursor: pointer;
         }
 
-        #time-dialog {
+        #time-dialog, #clear-feedback-dialog {
             border: 0;
             border-radius: 16px;
             padding: 24px;
             max-width: calc(100vw - 80px);
             color: var(--text-color);
         }
-        #time-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+        #time-dialog::backdrop, #clear-feedback-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
         #time-dialog label { display: block; margin-bottom: 12px; }
         #timer-minutes { font: inherit; width: 5em; padding: 8px; margin-bottom: 20px; }
         .dialog-actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -409,6 +437,20 @@
         </div>
         <button class="big-btn" id="idea-button" type="button" onclick="getSpark()">✨ Give me an idea</button>
         <p id="writing-reminder">Use the idea to write your own sentence on paper.</p>
+        <div id="idea-feedback" hidden>
+            <p>Did this idea help?</p>
+            <div class="feedback-buttons">
+                <button id="feedback-helpful" type="button" aria-pressed="false" onclick="rateIdea('helpful')">Helpful</button>
+                <button id="feedback-not-helpful" type="button" aria-pressed="false" onclick="rateIdea('not-helpful')">Didn’t help</button>
+            </div>
+            <details id="feedback-note-details">
+                <summary>Add a note (optional)</summary>
+                <label for="feedback-note">What would make the ideas better?</label>
+                <textarea id="feedback-note" maxlength="500" placeholder="Tell us what helped or what was missing."></textarea>
+                <button id="save-feedback-note" type="button" onclick="saveIdeaNote()">Save note</button>
+            </details>
+            <p id="feedback-status" role="status" aria-live="polite"></p>
+        </div>
     </div>
 
     <!-- Right: Visual Timer -->
@@ -443,6 +485,27 @@
     </div>
 </main>
 
+<details class="feedback-panel" id="saved-feedback">
+    <summary>Saved feedback</summary>
+    <p>Missing words are logged automatically. Ratings and notes help us improve the ideas. Nothing is sent automatically.</p>
+    <p id="feedback-summary"></p>
+    <p id="missing-words" lang="zh" tabindex="0"></p>
+    <p id="feedback-storage-status" role="status" aria-live="polite"></p>
+    <div class="dialog-actions">
+        <button id="download-feedback" type="button" onclick="downloadFeedback()" disabled>Download report</button>
+        <button id="clear-feedback" type="button" onclick="document.getElementById('clear-feedback-dialog').showModal()" disabled>Clear saved feedback</button>
+    </div>
+</details>
+
+<dialog id="clear-feedback-dialog" aria-labelledby="clear-feedback-title">
+    <h2 id="clear-feedback-title">Clear saved feedback?</h2>
+    <p>This removes missing words, ratings, and notes from this browser. Download a report first if you want to keep them.</p>
+    <div class="dialog-actions">
+        <button type="button" autofocus onclick="document.getElementById('clear-feedback-dialog').close()">Keep feedback</button>
+        <button type="button" onclick="clearSavedFeedback()">Clear feedback</button>
+    </div>
+</dialog>
+
 <dialog id="time-dialog" aria-labelledby="time-label">
     <form onsubmit="saveTime(event)">
         <label id="time-label" for="timer-minutes">Timer length (1–10 minutes)</label>
@@ -465,6 +528,7 @@
 
 <script src="prompts.js"></script>
 <script src="character-ideas.js"></script>
+<script src="feedback.js"></script>
 <script>
     // --- STATE ---
     let currentMode = 'chinese';
@@ -483,6 +547,7 @@
 
     // --- INIT ---
     window.onload = function() {
+        initializeFeedback();
         // Clone SVG to Zen container once
         const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
         document.getElementById('zen-svg-container').innerHTML = originalSvg;
@@ -536,6 +601,7 @@
     }
 
     function resetSparkDisplay() {
+        resetIdeaFeedback();
         document.getElementById('card-label').innerText = currentMode === 'chinese' ? 'Sentence idea' : 'Story Helper';
         const display = document.getElementById('spark-display');
         display.innerText = currentMode === 'chinese'
@@ -562,7 +628,10 @@
                 error = 'Type a Chinese character or word, such as 雨 or 学校, without spaces or punctuation.';
             } else {
                 list = ideasForText(text);
-                if (!list.length) error = `I don't have an idea for「${text}」yet. Try another character or word, or look in “Characters and words with ideas.”`;
+                if (!list.length) {
+                    recordMissingWord(text);
+                    error = `I don't have an idea for「${text}」yet. Try another character or word, or look in “Characters and words with ideas.” Missing word: ${feedbackSaveMessage()}`;
+                }
             }
             if (error) {
                 input.setAttribute('aria-invalid', 'true');
@@ -595,6 +664,12 @@
         void display.offsetWidth; 
         display.classList.add('fade-in');
         display.innerText = randomSpark.text;
+        showIdeaFeedback({
+            mode: currentMode,
+            input: currentMode === 'chinese' ? document.getElementById('character-input').value.trim() : '',
+            word: randomSpark.word || '',
+            idea: randomSpark.text
+        });
     }
 
     function nextPrompt(mode, list) {
