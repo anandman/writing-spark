@@ -11,7 +11,7 @@ const scriptSources = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]
     .map(match => fs.readFileSync(path.join(root, match[1]), 'utf8'));
 
 // Run the real app with a controllable clock and minimal browser/audio adapters.
-function boot({ audio = true, resumeFails = false, storage = new Map(), storageReadFails = false, storageWriteFails = false } = {}) {
+function boot({ audio = true, resumeFails = false, storage = new Map(), storageReadFails = false, storageWriteFails = false, navigator = {} } = {}) {
     let now = 0;
     let nextInterval = 0;
     let contextsCreated = 0;
@@ -72,6 +72,7 @@ function boot({ audio = true, resumeFails = false, storage = new Map(), storageR
         }
     }
     const context = vm.createContext({
+        navigator,
         window: {
             AudioContext: audio ? AudioContext : undefined,
             addEventListener(name, fn) { events.set(name, fn); },
@@ -696,4 +697,125 @@ test('clearing feedback removes only this app’s records and prevents stale rat
     app.run('rateIdea("not-helpful")');
     assert.equal(app.run('getFeedbackReport().ideaFeedback.length'), 1);
     assert.equal(app.run('getFeedbackReport().ideaFeedback[0].rating'), 'not-helpful');
+});
+
+test('the message report preserves missing counts, exact ideas, ratings and multiline notes', () => {
+    const app = boot();
+    app.character('学生');
+    app.run('getSpark(); getSpark()');
+    app.character('学校');
+    app.run('getSpark(); rateIdea("not-helpful")');
+    const idea = app.element('spark-display').innerText;
+    app.element('feedback-note').value = 'More playground ideas.\n中文也可以。';
+    app.run('saveIdeaNote(); setMode("english"); getSpark(); rateIdea("helpful")');
+    const englishIdea = app.element('spark-display').innerText;
+    const message = app.run('getFeedbackMessage()');
+    assert.match(message, /Writing Spark feedback/);
+    assert.match(message, /学生.*2 requests/);
+    assert(message.includes('Chinese: 学校'));
+    assert(message.includes('Suggested word: 学校'));
+    assert(message.includes(idea));
+    assert(message.includes('Didn’t help'));
+    assert(message.includes('More playground ideas.\n中文也可以。'));
+    assert(message.includes('English story'));
+    assert(message.includes(englishIdea));
+    assert(message.includes('Helpful'));
+});
+
+test('Share hands plain text to native sharing without attachments, deleting records or changing the timer', async () => {
+    const payloads = [];
+    const app = boot({navigator: {share: async payload => payloads.push(payload)}});
+    app.character('学生'); app.run('getSpark()');
+    app.character('学校'); app.run('getSpark(); rateIdea("helpful")');
+    app.tick(20000);
+    const before = app.storage.get('writing-spark-feedback-v1');
+    const promise = app.run('shareFeedback()');
+    assert.equal(payloads.length, 1); // Invoke during the gesture, before awaiting anything else.
+    await promise;
+    assert.equal(payloads[0].title, 'Writing Spark feedback');
+    assert(payloads[0].text.includes('学生'));
+    assert(payloads[0].text.includes('Chinese: 学校'));
+    assert.equal(payloads[0].files, undefined);
+    assert.equal(payloads[0].url, undefined);
+    assert.equal(app.storage.get('writing-spark-feedback-v1'), before);
+    assert.equal(app.digital(), '04:40');
+    assert.equal(app.element('share-feedback').disabled, false);
+});
+
+test('canceling native sharing does not copy feedback or claim it was sent', async () => {
+    const copied = [];
+    const app = boot({navigator: {
+        share: async () => { throw {name: 'AbortError'}; },
+        clipboard: {writeText: async text => copied.push(text)},
+    }});
+    app.character('学生'); app.run('getSpark()');
+    await app.run('shareFeedback()');
+    assert.equal(copied.length, 0);
+    assert.match(app.element('feedback-share-status').innerText, /closed/i);
+    assert.equal(app.element('feedback-copy-fallback').hidden, true);
+    assert.equal(app.run('getFeedbackReport().missingWords.length'), 1);
+});
+
+test('without native sharing Share copies the message and reports that it was copied', async () => {
+    const copied = [];
+    const app = boot({navigator: {clipboard: {writeText: async text => copied.push(text)}}});
+    app.character('学生'); app.run('getSpark()');
+    await app.run('shareFeedback()');
+    assert.equal(copied.length, 1);
+    assert(copied[0].includes('学生'));
+    assert.match(app.element('feedback-share-status').innerText, /copied.*paste/i);
+    assert.equal(app.element('feedback-copy-fallback').hidden, true);
+});
+
+test('native share failure exposes complete selectable text without losing saved feedback', async () => {
+    const app = boot({navigator: {share: async () => { throw {name: 'NotAllowedError'}; }}});
+    app.character('学生'); app.run('getSpark()');
+    await app.run('shareFeedback()');
+    assert.equal(app.element('feedback-copy-fallback').hidden, false);
+    assert(app.element('feedback-share-text').value.includes('学生'));
+    assert.match(app.element('feedback-share-status').innerText, /copy/i);
+    assert.equal(app.run('getFeedbackReport().missingWords.length'), 1);
+});
+
+test('Copy works independently and falls back to selectable text if clipboard permission is denied', async () => {
+    const copied = [];
+    const app = boot({navigator: {clipboard: {writeText: async text => copied.push(text)}}});
+    app.character('学校'); app.run('getSpark(); rateIdea("helpful")');
+    await app.run('copyFeedback()');
+    assert.equal(copied.length, 1);
+    assert(copied[0].includes('Chinese: 学校'));
+    const blocked = boot({navigator: {clipboard: {writeText: async () => { throw {name: 'NotAllowedError'}; }}}});
+    blocked.character('学校'); blocked.run('getSpark(); rateIdea("not-helpful")');
+    await blocked.run('copyFeedback()');
+    assert.equal(blocked.element('feedback-copy-fallback').hidden, false);
+    assert(blocked.element('feedback-share-text').value.includes('Didn’t help'));
+    assert.match(blocked.element('feedback-share-status').innerText, /copy.*paste/i);
+});
+
+test('empty reports are disabled and cannot open sharing or change the clipboard', async () => {
+    const actions = [];
+    const app = boot({navigator: {share: async () => actions.push('share'), clipboard: {writeText: async () => actions.push('copy')}}});
+    assert.equal(app.element('share-feedback').disabled, true);
+    assert.equal(app.element('copy-feedback').disabled, true);
+    await app.run('shareFeedback(); copyFeedback()');
+    assert.equal(actions.length, 0);
+});
+
+test('a pending share cannot open a second sheet and clearing feedback removes stale copy text', async () => {
+    let finish;
+    let calls = 0;
+    const app = boot({navigator: {share: () => { calls++; return new Promise(resolve => { finish = resolve; }); }}});
+    app.character('学生'); app.run('getSpark()');
+    const pending = app.run('shareFeedback()');
+    await app.run('shareFeedback()');
+    assert.equal(calls, 1);
+    assert.equal(app.element('share-feedback').disabled, true);
+    finish(); await pending;
+    assert.equal(app.element('share-feedback').disabled, false);
+    await app.run('copyFeedback()');
+    assert.equal(app.element('feedback-copy-fallback').hidden, false);
+    app.run('clearSavedFeedback()');
+    assert.equal(app.element('feedback-copy-fallback').hidden, true);
+    assert.equal(app.element('feedback-share-text').value, '');
+    assert.equal(app.element('share-feedback').disabled, true);
 });

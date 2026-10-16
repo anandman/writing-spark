@@ -18,7 +18,7 @@ The built-in collection has 492 ideas across 164 word entries, covering 255 char
 *   **Fresh Ideas:** Each character or word has its own shuffled deck. Every idea is shown before that deck repeats, with no immediate repeat. Switching inputs or modes preserves progress until the page reloads. When several words contain a character, suggestions vary between those words when possible.
 *   **English Thinking Cues:** 40 cues across eight strategies: association, memory, people, imagination, senses, details, structure, and speaking. Each new cue uses a different strategy whenever one remains.
 *   **Accessible Controls:** Keyboard controls, zoom support, reduced-motion support, and a sound toggle.
-*   **Feedback for Future Updates:** Missing words are logged automatically. A child can mark an idea **Helpful** or **Didn’t help**, and optionally save a short note. A parent can download the records for a later manual update to the collection.
+*   **Feedback for Future Updates:** Missing words are logged automatically. A child can mark an idea **Helpful** or **Didn’t help**, and optionally save a short note. Share feedback as a message or copy it for a later manual update to the collection. A JSON download is also available.
 
 ## How to Use
 
@@ -36,15 +36,17 @@ To use the app entirely offline, download `index.html`, `prompts.js`, `character
 
 ## Using Feedback to Improve the App
 
-Open **Saved feedback** below the app on the browser/device your child used, then choose **Download report**. Give the downloaded JSON file to a future coding session and ask it to add missing vocabulary and improve ideas using the feedback. The report includes missing-word counts and dates, plus the exact input, suggested word, idea, rating, and optional note. It does not include a child's name or an account identifier.
+Open **Saved feedback** below the app on the browser/device your child used, then choose **Share feedback**. On devices with sharing support, choose Messages or another messaging app and the person to send it to. It shares readable text, including missing-word counts and the exact input, suggested word, idea, rating, and note. A parent can paste that message into a future coding session to request improvements to the collection.
+
+**Copy feedback** copies the same message. If native sharing is unavailable, Share tries copying instead; if sharing or clipboard access fails, a selectable text box lets you copy manually. Closing the share sheet leaves the records saved and does not automatically copy or resend them. **Download report** still exports the full JSON report, including record dates. Reports do not add a child's name or an account identifier.
 
 Ratings save immediately; use **Save note** for an optional note (up to 500 characters). Changing a rating or note updates that displayed idea's response. Getting another idea starts a fresh response. Feedback does not restart the timer. Invalid entries such as Latin letters or punctuation are not logged as missing vocabulary.
 
-Reports require manual sharing; the app does not upload them, sync them across devices, or change its collection automatically. Browser storage keeps them across visits when available. Clearing browser data removes them. If storage is blocked, full, or unreadable, the app keeps new records for the current visit and tells you to download them before closing the page. **Clear saved feedback** asks for confirmation and clears only this app's feedback after you've kept any report you need.
+Reports require manual sharing; the app does not upload them, sync them across devices, or change its collection automatically. Browser storage keeps them across visits when available. Clearing browser data removes them. If storage is blocked, full, or unreadable, the app keeps new records for the current visit and tells you to share, copy, or download them before closing the page. **Clear saved feedback** asks for confirmation and clears only this app's feedback after you've kept any report you need.
 
 ## Checks
 
-With Node.js installed, run `node --test tests/app.test.cjs` for character and compound-word matching, input validation, composition handling, deck selection, feedback persistence/export data, timer, and audio regression checks. No dependencies or build step are required.
+With Node.js installed, run `node --test tests/app.test.cjs` for character and compound-word matching, input validation, composition handling, deck selection, feedback persistence, sharing/copy fallbacks, export data, timer, and audio regression checks. No dependencies or build step are required.
 
 ## Deployment
 

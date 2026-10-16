@@ -5,6 +5,7 @@ let feedbackStorageReadable = true;
 let feedbackPersistent = true;
 let currentIdeaForFeedback = null;
 let currentFeedbackIndex = null;
+let feedbackShareInProgress = false;
 
 function initializeFeedback() {
     try {
@@ -39,7 +40,7 @@ function validFeedbackData(data) {
 function feedbackSaveMessage() {
     return feedbackPersistent
         ? 'Saved on this device.'
-        : 'Saved for this visit only. Download the report before closing this page.';
+        : 'Saved for this visit only. Share, copy, or download the feedback before closing this page.';
 }
 
 function persistFeedback() {
@@ -122,10 +123,14 @@ function updateFeedbackPanel() {
     document.getElementById('missing-words').innerText = feedbackData.missingWords
         .map(record => `${record.input} (${record.count})`).join(' · ');
     document.getElementById('feedback-storage-status').innerText = feedbackPersistent
-        ? 'Saved in this browser. Download a report to share it for a future app update. Clearing browser data removes these records.'
+        ? 'Saved in this browser. Share the feedback in a message for a future app update. Clearing browser data removes these records.'
         : feedbackSaveMessage();
     document.getElementById('download-feedback').disabled = missing + feedback === 0;
     document.getElementById('clear-feedback').disabled = missing + feedback === 0 && feedbackStorageReadable;
+    updateFeedbackShareControls();
+    document.getElementById('feedback-share-status').innerText = '';
+    document.getElementById('feedback-copy-fallback').hidden = true;
+    document.getElementById('feedback-share-text').value = '';
 }
 
 function getFeedbackReport() {
@@ -136,6 +141,87 @@ function getFeedbackReport() {
         exportedAt: new Date().toISOString(),
         ...feedbackData
     }));
+}
+
+function getFeedbackMessage() {
+    const report = getFeedbackReport();
+    const lines = ['Writing Spark feedback', `Report date: ${report.exportedAt.slice(0, 10)}`, '', 'Missing words:'];
+    for (const record of report.missingWords) {
+        lines.push(`- ${record.input}: ${record.count} ${record.count === 1 ? 'request' : 'requests'}`);
+    }
+    if (!report.missingWords.length) lines.push('None recorded.');
+    lines.push('', 'Idea feedback:');
+    report.ideaFeedback.forEach((record, index) => {
+        lines.push('', `${index + 1}. ${record.mode === 'chinese' ? `Chinese: ${record.input}` : 'English story'}`);
+        if (record.word) lines.push(`Suggested word: ${record.word}`);
+        lines.push(`Idea: ${record.idea}`);
+        const rating = record.rating === 'helpful' ? 'Helpful' : record.rating === 'not-helpful' ? 'Didn’t help' : 'Note only';
+        lines.push(`Feedback: ${rating}`);
+        if (record.note) lines.push(`Note: ${record.note}`);
+    });
+    if (!report.ideaFeedback.length) lines.push('None recorded.');
+    return lines.join('\n');
+}
+
+function hasSavedFeedback() {
+    return feedbackData.missingWords.length + feedbackData.ideaFeedback.length > 0;
+}
+
+function updateFeedbackShareControls() {
+    const disabled = !hasSavedFeedback() || feedbackShareInProgress;
+    document.getElementById('share-feedback').disabled = disabled;
+    document.getElementById('copy-feedback').disabled = disabled;
+}
+
+function showFeedbackCopy(text, message) {
+    document.getElementById('feedback-share-status').innerText = message;
+    document.getElementById('feedback-copy-fallback').hidden = false;
+    const field = document.getElementById('feedback-share-text');
+    field.value = text;
+    field.focus();
+    field.select();
+}
+
+async function shareFeedback() {
+    if (!hasSavedFeedback() || feedbackShareInProgress) return;
+    if (typeof navigator.share !== 'function') {
+        await copyFeedback();
+        return;
+    }
+    const text = getFeedbackMessage();
+    feedbackShareInProgress = true;
+    updateFeedbackShareControls();
+    document.getElementById('feedback-copy-fallback').hidden = true;
+    document.getElementById('feedback-share-status').innerText = '';
+    try {
+        // Call during the button's user gesture; share text rather than a file
+        // so it can be sent through Messages and pasted into a future chat.
+        await navigator.share({ title: 'Writing Spark feedback', text });
+        // Resolving this promise does not prove delivery to a recipient.
+        document.getElementById('feedback-share-status').innerText = 'Share options opened. Your feedback is still saved here.';
+    } catch (error) {
+        if (error?.name === 'AbortError') {
+            document.getElementById('feedback-share-status').innerText = 'Sharing closed. Your feedback is still saved here. You can try again or copy it.';
+        } else {
+            showFeedbackCopy(text, 'Sharing is unavailable here. Copy the text below and paste it into a message.');
+        }
+    } finally {
+        feedbackShareInProgress = false;
+        updateFeedbackShareControls();
+    }
+}
+
+async function copyFeedback() {
+    if (!hasSavedFeedback() || feedbackShareInProgress) return;
+    const text = getFeedbackMessage();
+    try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(text);
+        document.getElementById('feedback-copy-fallback').hidden = true;
+        document.getElementById('feedback-share-status').innerText = 'Feedback copied. Paste it into a message.';
+    } catch (_) {
+        showFeedbackCopy(text, 'Select and copy the text below, then paste it into a message.');
+    }
 }
 
 function downloadFeedback() {

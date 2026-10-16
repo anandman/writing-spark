@@ -179,7 +179,7 @@
         #feedback-note-details { margin-top: 12px; }
         #feedback-note-details summary, .feedback-panel summary { cursor: pointer; padding: 8px 0; }
         #feedback-note-details label { display: block; margin: 12px 0 6px; }
-        #feedback-note {
+        #feedback-note, #feedback-share-text {
             box-sizing: border-box; width: 100%; min-height: 90px;
             font: inherit; line-height: 1.5; padding: 10px;
             border: 1px solid #9aa8aa; border-radius: 10px; resize: vertical;
@@ -193,6 +193,9 @@
             font-size: 0.9rem; line-height: 1.5;
         }
         .feedback-panel button:disabled { opacity: 0.5; cursor: default; }
+        .feedback-panel #share-feedback { background: var(--accent-color); color: white; border-color: var(--accent-color); font-weight: bold; }
+        #feedback-copy-fallback label { display: block; margin: 12px 0 6px; }
+        #feedback-share-text { min-height: 200px; }
         #missing-words { max-height: 8em; overflow-y: auto; }
 
         .spark-text {
@@ -491,9 +494,17 @@
     <p id="feedback-summary"></p>
     <p id="missing-words" lang="zh" tabindex="0"></p>
     <p id="feedback-storage-status" role="status" aria-live="polite"></p>
+    <p>Share the feedback in Messages or another app, or copy it to paste into a message.</p>
     <div class="dialog-actions">
+        <button id="share-feedback" type="button" onclick="shareFeedback()" disabled>Share feedback</button>
+        <button id="copy-feedback" type="button" onclick="copyFeedback()" disabled>Copy feedback</button>
         <button id="download-feedback" type="button" onclick="downloadFeedback()" disabled>Download report</button>
         <button id="clear-feedback" type="button" onclick="document.getElementById('clear-feedback-dialog').showModal()" disabled>Clear saved feedback</button>
+    </div>
+    <p id="feedback-share-status" role="status" aria-live="polite"></p>
+    <div id="feedback-copy-fallback" hidden>
+        <label for="feedback-share-text">Feedback to copy</label>
+        <textarea id="feedback-share-text" readonly spellcheck="false"></textarea>
     </div>
 </details>
 
