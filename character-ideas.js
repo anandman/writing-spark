@@ -186,6 +186,11 @@ const CHARACTER_IDEAS = [
         'Write about helping a friend who dropped their pencils.',
         'Write about making a new friend on the playground.'
     ] },
+    { words: ['好朋友'], meaning: 'good friend', ideas: [
+        'Write about a good friend who makes you laugh.',
+        'Write about a good friend helping you learn something new.',
+        'Write about planning a surprise for a good friend.'
+    ] },
     { words: ['老师', '老師'], meaning: 'teacher', ideas: [
         'Write about a teacher showing the class something surprising.',
         'Write about thanking a teacher for helping you.',
@@ -827,7 +832,16 @@ const CHARACTER_IDEAS = [
 ];
 
 const CHARACTER_IDEAS_BY_CHARACTER = new Map();
+const CHARACTER_IDEAS_BY_WORD = new Map();
 for (const entry of CHARACTER_IDEAS) {
+    for (const word of entry.words) {
+        if ([...word].length === 1) continue;
+        const cards = CHARACTER_IDEAS_BY_WORD.get(word) || [];
+        cards.push(...entry.ideas.map(text => ({
+            strategy: entry.words[0], word, meaning: entry.meaning, text
+        })));
+        CHARACTER_IDEAS_BY_WORD.set(word, cards);
+    }
     for (const character of new Set(entry.words.join(''))) {
         const word = entry.words.find(form => form.includes(character));
         const cards = CHARACTER_IDEAS_BY_CHARACTER.get(character) || [];
@@ -838,6 +852,9 @@ for (const entry of CHARACTER_IDEAS) {
     }
 }
 
-function ideasForCharacter(character) {
-    return CHARACTER_IDEAS_BY_CHARACTER.get(character) || [];
+function ideasForText(text) {
+    // A single character can suggest a word containing it. Compounds must
+    // match as a whole, in the entered script, without splitting into characters.
+    const index = [...text].length === 1 ? CHARACTER_IDEAS_BY_CHARACTER : CHARACTER_IDEAS_BY_WORD;
+    return index.get(text) || [];
 }

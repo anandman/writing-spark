@@ -365,12 +365,12 @@ test('a typed character gets a related situation and a word that uses it', () =>
 
 test('invalid and missing characters do not start a timer or show an unrelated idea', () => {
     const app = boot();
-    for (const value of ['', ' ', 'yu', '雨天', '雨!', '🌧', '<img>', '1']) {
+    for (const value of ['', ' ', 'yu', '学 校', '学校!', '学校abc', '雨!', '🌧', '<img>', '1']) {
         app.character(value);
         app.run('getSpark()');
         assert.equal(app.intervals(), 0, value);
         assert.equal(app.element('character-input').attributes['aria-invalid'], 'true');
-        assert.match(app.element('character-error').innerText, /one Chinese character/i);
+        assert.match(app.element('character-error').innerText, /Chinese character or word/i);
         assert.equal(app.element('idea-context').hidden, true);
     }
 });
@@ -456,7 +456,7 @@ test('every listed character has distinct usable ideas and matching words', () =
     assert(characters.includes('學'));
     assert.equal(new Set(characters).size, [...characters].length);
     for (const character of characters) {
-        const cards = app.run(`ideasForCharacter(${JSON.stringify(character)})`);
+        const cards = app.run(`ideasForText(${JSON.stringify(character)})`);
         assert(cards.length >= 3, character);
         assert.equal(new Set(cards.map(card => card.text)).size, cards.length, character);
         for (const card of cards) {
@@ -465,5 +465,101 @@ test('every listed character has distinct usable ideas and matching words', () =
             assert(card.text.trim().length > 10);
             assert.doesNotMatch(card.text, /<[^>]*>|[。！？]/);
         }
+    }
+});
+
+test('compound words get ideas for the whole word, including traditional and longer words', () => {
+    const app = boot();
+    for (const [input, word, topic] of [
+        ['  学校\n', '学校', /school/i],
+        ['學校', '學校', /school/i],
+        ['朋友', '朋友', /friend/i],
+        ['快乐', '快乐', /happy/i],
+        ['快樂', '快樂', /happy/i],
+        ['好朋友', '好朋友', /friend/i],
+    ]) {
+        app.character(input);
+        const seen = new Set();
+        let previous;
+        for (let i = 0; i < 6; i++) {
+            app.run('getSpark()');
+            const idea = app.element('spark-display').innerText;
+            assert.equal(app.element('idea-context').hidden, false, input);
+            assert.equal(app.element('character-error').innerText, '', input);
+            assert.equal(app.element('idea-word').innerText, word);
+            assert.match(idea, topic);
+            assert.notEqual(idea, previous);
+            if (i < 3) seen.add(idea);
+            previous = idea;
+        }
+        assert.equal(seen.size, 3, input);
+        assert.equal(app.intervals(), 1);
+    }
+});
+
+test('unsupported compounds do not fall back to unrelated individual-character ideas', () => {
+    const app = boot();
+    app.character('雨');
+    app.run('getSpark()');
+    app.tick(20000);
+    for (const word of ['雨天', '学生', '猫狗', '校学']) {
+        app.character(word);
+        app.run('getSpark()');
+        assert.match(app.element('character-error').innerText, /don't have an idea.*yet/i);
+        assert(app.element('character-error').innerText.includes(word));
+        assert.equal(app.element('idea-context').hidden, true);
+        assert.equal(app.element('idea-word').innerText, '');
+        assert.equal(app.digital(), '04:40');
+    }
+});
+
+test('word decks survive switching to a character or English without mixing their ideas', () => {
+    const app = boot();
+    app.character('学校');
+    app.run('getSpark()');
+    const first = app.element('spark-display').innerText;
+    app.character('学');
+    app.run('getSpark()');
+    app.run('setMode("english"); getSpark(); setMode("chinese")');
+    app.character('学校');
+    app.run('getSpark()');
+    assert.equal(app.element('idea-word').innerText, '学校');
+    const second = app.element('spark-display').innerText;
+    assert.notEqual(second, first);
+    app.run('getSpark()');
+    const third = app.element('spark-display').innerText;
+    assert.notEqual(third, second);
+    assert.notEqual(third, first);
+});
+
+test('composing a compound word cannot submit a partly entered word', () => {
+    const app = boot();
+    const input = app.element('character-input');
+    app.character('学');
+    input.dispatch('compositionstart');
+    app.character('学校');
+    input.dispatch('keydown', { key: 'Enter', isComposing: true });
+    app.run('getSpark()');
+    assert.equal(app.intervals(), 0);
+    input.dispatch('compositionend');
+    input.dispatch('keydown', { key: 'Enter', keyCode: 229 });
+    assert.equal(app.intervals(), 0);
+    input.dispatch('keydown', { key: 'Enter', preventDefault() {} });
+    assert.equal(app.intervals(), 1);
+    assert.equal(app.element('idea-word').innerText, '学校');
+});
+
+test('every listed word is available as a complete word in its displayed script', () => {
+    const app = boot();
+    const words = app.element('supported-words').innerText.trim().split(/\s+/);
+    assert(words.includes('学校'));
+    assert(words.includes('學校'));
+    assert(words.includes('好朋友'));
+    assert.equal(new Set(words).size, words.length);
+    for (const word of words) {
+        const cards = app.run(`ideasForText(${JSON.stringify(word)})`);
+        assert(cards.length >= 3, word);
+        assert.equal(new Set(cards.map(card => card.text)).size, cards.length, word);
+        for (const card of cards) assert.equal(card.word, word);
     }
 });

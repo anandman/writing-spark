@@ -124,7 +124,7 @@
         #character-error:empty { display: none; }
         #character-coverage { font-size: 0.85rem; line-height: 1.5; }
         #character-coverage summary { cursor: pointer; padding: 6px 0; }
-        #supported-characters {
+        #supported-characters, #supported-words {
             max-height: 9em;
             overflow-y: auto;
             line-height: 2;
@@ -385,12 +385,15 @@
     <!-- Left: Spark Card -->
     <div class="spark-section">
         <div id="character-entry">
-            <label for="character-input">Which Chinese character are you writing about?</label>
-            <input id="character-input" type="text" lang="zh" placeholder="雨" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="character-hint character-error" aria-invalid="false">
-            <p id="character-hint">Type one character with your Chinese keyboard, then ask for an idea.</p>
+            <label for="character-input">Which Chinese character or word are you writing about?</label>
+            <input id="character-input" type="text" lang="zh" placeholder="雨 or 学校" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="character-hint character-error" aria-invalid="false">
+            <p id="character-hint">Type a character or a whole word with your Chinese keyboard, then ask for an idea.</p>
             <p id="character-error" role="status" aria-live="polite"></p>
             <details id="character-coverage">
-                <summary>Characters with ideas</summary>
+                <summary>Characters and words with ideas</summary>
+                <p><strong>Words</strong></p>
+                <p id="supported-words" lang="zh" tabindex="0"></p>
+                <p><strong>Characters</strong></p>
                 <p id="supported-characters" lang="zh" tabindex="0"></p>
             </details>
         </div>
@@ -401,7 +404,7 @@
                     A word you could use: <strong id="idea-word" lang="zh"></strong>
                     <span id="idea-meaning"></span>
                 </div>
-                <div class="spark-text" id="spark-display">Type a character above to find an idea.</div>
+                <div class="spark-text" id="spark-display">Type a character or word above to find an idea.</div>
             </div>
         </div>
         <button class="big-btn" id="idea-button" type="button" onclick="getSpark()">✨ Give me an idea</button>
@@ -503,6 +506,8 @@
         });
         document.getElementById('supported-characters').innerText =
             [...CHARACTER_IDEAS_BY_CHARACTER.keys()].sort().join(' ');
+        document.getElementById('supported-words').innerText =
+            [...CHARACTER_IDEAS_BY_WORD.keys()].sort().join(' ');
         resetSparkDisplay();
     };
 
@@ -534,7 +539,7 @@
         document.getElementById('card-label').innerText = currentMode === 'chinese' ? 'Sentence idea' : 'Story Helper';
         const display = document.getElementById('spark-display');
         display.innerText = currentMode === 'chinese'
-            ? 'Type a character above, then ask for an idea.' : 'Ready for a story idea?';
+            ? 'Type a character or word above, then ask for an idea.' : 'Ready for a story idea?';
         display.classList.remove('fade-in');
         document.getElementById('idea-context').hidden = true;
         document.getElementById('idea-word').innerText = '';
@@ -550,14 +555,14 @@
         if (currentMode === 'chinese') {
             if (characterComposing) return;
             const input = document.getElementById('character-input');
-            const character = input.value.trim();
+            const text = input.value.trim();
             resetSparkDisplay();
             let error = '';
-            if (!/^\p{Script=Han}$/u.test(character)) {
-                error = 'Type one Chinese character, such as 雨 or 猫.';
+            if (!/^\p{Script=Han}+$/u.test(text)) {
+                error = 'Type a Chinese character or word, such as 雨 or 学校, without spaces or punctuation.';
             } else {
-                list = ideasForCharacter(character);
-                if (!list.length) error = `I don't have an idea for「${character}」yet. Try another character, or look in “Characters with ideas.”`;
+                list = ideasForText(text);
+                if (!list.length) error = `I don't have an idea for「${text}」yet. Try another character or word, or look in “Characters and words with ideas.”`;
             }
             if (error) {
                 input.setAttribute('aria-invalid', 'true');
@@ -565,8 +570,8 @@
                 input.focus();
                 return;
             }
-            deckKey = 'character:' + character;
-            document.getElementById('card-label').innerText = `An idea for「${character}」`;
+            deckKey = 'character:' + text;
+            document.getElementById('card-label').innerText = `An idea for「${text}」`;
         } else {
             list = PROMPTS_CONFIG.english;
         }
