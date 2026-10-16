@@ -122,8 +122,19 @@
         #character-hint, #character-error { margin: 8px 0; font-size: 0.9rem; line-height: 1.4; }
         #character-error { color: #a92738; }
         #character-error:empty { display: none; }
-        #character-coverage { font-size: 0.85rem; line-height: 1.5; }
-        #character-coverage summary { cursor: pointer; padding: 6px 0; }
+        #character-coverage, #curriculum-browser { font-size: 0.85rem; line-height: 1.5; }
+        #character-coverage summary, #curriculum-browser summary { cursor: pointer; padding: 6px 0; }
+        .curriculum-selectors { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; }
+        .curriculum-selectors select {
+            min-height: 44px; padding: 6px 12px; font: inherit;
+            color: #2c3e50; background: white; border: 1px solid #c6bda8; border-radius: 8px;
+        }
+        #curriculum-characters { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+        #curriculum-characters button {
+            min-width: 44px; min-height: 44px; padding: 6px; font-size: 1.35rem;
+            color: #2c3e50; background: white; border: 1px solid #c6bda8; border-radius: 8px;
+        }
+        #curriculum-missing { overflow-wrap: anywhere; }
         #supported-characters, #supported-words {
             max-height: 9em;
             overflow-y: auto;
@@ -420,6 +431,29 @@
             <input id="character-input" type="text" lang="zh-Hans" placeholder="雨 or 学校" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="character-hint character-error" aria-invalid="false">
             <p id="character-hint">Type a character or a whole word with your Chinese keyboard, then ask for an idea.</p>
             <p id="character-error" role="status" aria-live="polite"></p>
+            <details id="curriculum-browser">
+                <summary>Browse Better Immersion by level and unit</summary>
+                <p>New Edition reference. Your school workbook may use a different order. You can always type your own character or word above.</p>
+                <div class="curriculum-selectors">
+                    <div>
+                        <label for="curriculum-level">Book level</label>
+                        <select id="curriculum-level">
+                            <option value="2">Level 2</option>
+                            <option value="3">Level 3</option>
+                            <option value="4" selected>Level 4</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="curriculum-unit">Unit</label>
+                        <select id="curriculum-unit"></select>
+                    </div>
+                </div>
+                <p id="curriculum-coverage"></p>
+                <p id="curriculum-unit-status" role="status" aria-live="polite"></p>
+                <div id="curriculum-characters" lang="zh-Hans" role="group" aria-label="Unit characters with ideas"></div>
+                <p id="curriculum-missing" hidden></p>
+                <p><a href="https://www.pgcps.org/globalassets/schools/elementary/paint-branch/docs---paint-branch/better-immersion-chinese-character-list.pdf" target="_blank" rel="noopener">Source character list (PDF)</a>. Word suggestions are from Writing Spark.</p>
+            </details>
             <details id="character-coverage">
                 <summary>Characters and words with ideas</summary>
                 <p><strong>Words</strong></p>
@@ -538,7 +572,9 @@
 </dialog>
 
 <script src="prompts.js"></script>
+<script src="curriculum-ideas.js"></script>
 <script src="character-ideas.js"></script>
+<script src="better-immersion.js"></script>
 <script src="feedback.js"></script>
 <script>
     // --- STATE ---
@@ -559,6 +595,7 @@
     // --- INIT ---
     window.onload = function() {
         initializeFeedback();
+        initializeCurriculum();
         // Clone SVG to Zen container once
         const originalSvg = document.querySelector('#visual-timer-container').innerHTML;
         document.getElementById('zen-svg-container').innerHTML = originalSvg;

@@ -14,6 +14,7 @@ const scriptSources = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]
 function boot({ audio = true, resumeFails = false, storage = new Map(), storageReadFails = false, storageWriteFails = false, navigator = {} } = {}) {
     let now = 0;
     let nextInterval = 0;
+    let nextElement = 0;
     let contextsCreated = 0;
     let resumeCalls = 0;
     const notes = [];
@@ -25,6 +26,7 @@ function boot({ audio = true, resumeFails = false, storage = new Map(), storageR
             const classes = new Set();
             elements.set(id, {
                 innerText: '', innerHTML: '', offsetWidth: 0,
+                children: [],
                 attributes: {}, value: '', open: false, hidden: false, listeners: new Map(),
                 classList: {
                     add: (...names) => names.forEach(name => classes.add(name)),
@@ -32,6 +34,8 @@ function boot({ audio = true, resumeFails = false, storage = new Map(), storageR
                     toggle(name, force) { if (force) classes.add(name); else classes.delete(name); },
                 },
                 setAttribute(name, value) { this.attributes[name] = value; },
+                appendChild(child) { this.children.push(child); return child; },
+                replaceChildren(...children) { this.children = children; },
                 addEventListener(name, fn) { this.listeners.set(name, fn); },
                 dispatch(name, event = {}) { this.listeners.get(name)?.(event); },
                 setCustomValidity(message) { this.validationMessage = message; },
@@ -94,6 +98,7 @@ function boot({ audio = true, resumeFails = false, storage = new Map(), storageR
         document: {
             body: element('body'), hidden: false,
             getElementById: element,
+            createElement: tag => element(`${tag}-${++nextElement}`),
             querySelector: selector => element(selector),
             querySelectorAll: () => [element('main-wedge'), element('zen-wedge')],
             addEventListener(name, fn) { events.set(name, fn); },
@@ -525,7 +530,7 @@ test('unsupported compounds do not fall back to unrelated individual-character i
     app.character('雨');
     app.run('getSpark()');
     app.tick(20000);
-    for (const word of ['雨天', '学生', '猫狗', '校学']) {
+    for (const word of ['雨天', '星际旅行', '猫狗', '校学']) {
         app.character(word);
         app.run('getSpark()');
         assert.match(app.element('character-error').innerText, /don't have an idea.*yet/i);
@@ -534,6 +539,118 @@ test('unsupported compounds do not fall back to unrelated individual-character i
         assert.equal(app.element('idea-word').innerText, '');
         assert.equal(app.digital(), '04:40');
     }
+});
+
+test('trip accounts and school vocabulary have their own complete-word ideas', () => {
+    const app = boot();
+    for (const [input, word, topic] of [
+        ['游记', '游记', /travel journal/i],
+        ['游記', '游记', /travel journal/i],
+        ['观察', '观察', /observe|watch|notice/i],
+        ['经历', '经历', /experience/i],
+        ['学生', '学生', /student/i],
+        ['完成', '完成', /finish|complet/i],
+    ]) {
+        app.character(input);
+        const seen = new Set();
+        for (let i = 0; i < 3; i++) {
+            app.run('getSpark()');
+            assert.equal(app.element('character-error').innerText, '', input);
+            assert.equal(app.element('idea-word').innerText, word);
+            const idea = app.element('spark-display').innerText;
+            assert.match(idea, topic);
+            seen.add(idea);
+        }
+        assert.equal(seen.size, 3, input);
+    }
+    assert.equal(app.run('getFeedbackReport().missingWords.length'), 0);
+});
+
+test('Better Immersion source preserves level and unit boundaries with standard Han characters', () => {
+    const app = boot();
+    for (const [level, unitCount, total] of [[2, 27, 151], [3, 27, 225], [4, 13, 117]]) {
+        const units = app.run(`BETTER_IMMERSION_LEVELS[${level}]`);
+        assert.equal(units.length, unitCount);
+        const characters = units.map(unit => unit.characters).join('');
+        assert.equal([...characters].length, total);
+        assert.equal(new Set(characters).size, total);
+        assert.match(characters, /^[\u4e00-\u9fff]+$/u);
+        for (let i = 0; i < units.length; i++) assert.equal(units[i].unit, i + 1);
+        const coverage = app.run(`curriculumCoverage(${level})`);
+        assert.equal(coverage.total, total);
+        assert.equal(coverage.available + coverage.missing.length, total);
+    }
+    assert.equal(app.run('curriculumUnit(2, 1).characters'), '狗努猫牛像');
+    assert.equal(app.run('curriculumUnit(3, 25).characters'), '恐龙灭绝考古已颗灾');
+    assert.equal(app.run('curriculumUnit(4, 6).characters'), '游假旁停谈访止判程');
+    assert.equal(app.run('curriculumUnit(4, 14)'), null);
+    assert.equal(app.run('curriculumUnit(99, 1)'), null);
+});
+
+test('every Better Immersion Level 4 character has at least three word-specific ideas', () => {
+    const app = boot();
+    const missing = [];
+    for (const unit of app.run('BETTER_IMMERSION_LEVELS[4]')) {
+        for (const character of unit.characters) {
+            const cards = app.run(`ideasForText(${JSON.stringify(character)})`);
+            if (cards.length < 3) missing.push(`${unit.unit}: ${character}`);
+            for (const card of cards) assert(card.word.includes(character), character);
+        }
+    }
+    assert.deepEqual(missing, []);
+    assert.equal(app.run('curriculumCoverage(4).available'), 117);
+});
+
+test('curriculum browsing preserves the active idea, timer and feedback and resets invalid units', () => {
+    const app = boot();
+    app.character('游记');
+    app.run('getSpark(); rateIdea("helpful")');
+    app.tick(20000);
+    const idea = app.element('spark-display').innerText;
+    app.element('curriculum-level').value = '2';
+    app.element('curriculum-level').dispatch('change');
+    assert.equal(app.element('curriculum-unit').children.length, 27);
+    assert.match(app.element('curriculum-missing').innerText, /像/);
+    app.element('curriculum-unit').value = '18';
+    app.element('curriculum-unit').dispatch('change');
+    assert.equal(app.element('curriculum-characters').children.length, 0);
+    assert.doesNotMatch(app.element('curriculum-unit-status').innerText, /Tap a character/);
+    app.element('curriculum-unit').value = '27';
+    app.element('curriculum-unit').dispatch('change');
+    app.element('curriculum-level').value = '4';
+    app.element('curriculum-level').dispatch('change');
+    assert.equal(app.element('curriculum-unit').children.length, 13);
+    assert.equal(app.element('curriculum-unit').value, '1');
+    assert.equal(app.element('curriculum-characters').children.length, 9);
+    assert.equal(app.element('curriculum-missing').hidden, true);
+    assert.match(app.element('curriculum-coverage').innerText, /117 of 117/);
+    assert.equal(app.element('character-input').value, '游记');
+    assert.equal(app.element('spark-display').innerText, idea);
+    assert.equal(app.digital(), '04:40');
+    assert.equal(app.run('getFeedbackReport().missingWords.length'), 0);
+    assert.equal(app.run('getFeedbackReport().ideaFeedback.length'), 1);
+});
+
+test('selecting a curriculum character requests its idea and respects composition and mode', () => {
+    const app = boot();
+    app.run('chooseCurriculumCharacter("查")');
+    assert.equal(app.element('character-input').value, '查');
+    assert.equal(app.element('idea-word').innerText, '检查');
+    assert.equal(app.intervals(), 1);
+    app.run('rateIdea("helpful")');
+    app.element('character-input').dispatch('compositionstart');
+    app.run('chooseCurriculumCharacter("族")');
+    assert.equal(app.element('character-input').value, '查');
+    app.element('character-input').dispatch('compositionend');
+    app.run('chooseCurriculumCharacter("族")');
+    assert.equal(app.element('character-input').value, '族');
+    assert.equal(app.element('idea-word').innerText, '家族');
+    assert.equal(app.element('feedback-helpful').attributes['aria-pressed'], 'false');
+    app.run('chooseCurriculumCharacter("像"); chooseCurriculumCharacter("<script>")');
+    assert.equal(app.element('character-input').value, '族');
+    assert.equal(app.run('getFeedbackReport().missingWords.length'), 0);
+    app.run('setMode("english"); chooseCurriculumCharacter("查")');
+    assert.equal(app.element('character-input').value, '族');
 });
 
 test('word decks survive switching to a character or English without mixing their ideas', () => {
@@ -626,7 +743,7 @@ test('feedback preserves the typed input alongside the simplified suggestion', (
 
 test('unknown words are counted and survive reload while invalid and known inputs are excluded', () => {
     const app = boot();
-    for (const word of ['  学生 ', '学生', '雨天', 'hello', '学 校', '学校']) {
+    for (const word of ['  星际旅行 ', '星际旅行', '雨天', 'hello', '学 校', '学校']) {
         app.character(word);
         app.run('getSpark()');
         app.elapse(1000);
@@ -636,9 +753,9 @@ test('unknown words are counted and survive reload while invalid and known input
     const report = reloaded.run('getFeedbackReport()');
     assert.equal(report.schemaVersion, 1);
     assert.equal(report.missingWords.length, 2);
-    assert.equal(report.missingWords.find(record => record.input === '学生').count, 2);
-    assert.equal(report.missingWords.find(record => record.input === '学生').firstSeen, '1970-01-01T00:00:00.000Z');
-    assert.equal(report.missingWords.find(record => record.input === '学生').lastSeen, '1970-01-01T00:00:01.000Z');
+    assert.equal(report.missingWords.find(record => record.input === '星际旅行').count, 2);
+    assert.equal(report.missingWords.find(record => record.input === '星际旅行').firstSeen, '1970-01-01T00:00:00.000Z');
+    assert.equal(report.missingWords.find(record => record.input === '星际旅行').lastSeen, '1970-01-01T00:00:01.000Z');
     assert.equal(report.ideaFeedback.length, 0);
 });
 
@@ -673,7 +790,7 @@ test('a new idea or edit resets feedback so it cannot be attached to a stale ide
     assert.equal(app.element('feedback-helpful').attributes['aria-pressed'], 'false');
     app.element('feedback-note').value = 'Another idea please';
     app.run('saveIdeaNote()');
-    app.character('学生');
+    app.character('星际旅行');
     assert.equal(app.element('idea-feedback').hidden, true);
     app.run('rateIdea("not-helpful"); saveIdeaNote()');
     const report = app.run('getFeedbackReport()');
@@ -699,7 +816,7 @@ test('English feedback has no stale Chinese input and an optional note is bounde
 test('storage failures keep writing usable and feedback exportable without promising persistence', () => {
     for (const options of [{storageReadFails: true}, {storageWriteFails: true}]) {
         const app = boot(options);
-        app.character('学生');
+        app.character('星际旅行');
         app.run('getSpark()');
         assert.match(app.element('character-error').innerText, /this visit only/i);
         app.character('学校');
@@ -716,7 +833,7 @@ test('malformed or incompatible saved data is not overwritten and does not break
     for (const value of ['{broken', '{"schemaVersion":2}', '{"schemaVersion":1,"missingWords":[null],"ideaFeedback":[]}']) {
         const storage = new Map([['writing-spark-feedback-v1', value]]);
         const app = boot({storage});
-        app.character('学生');
+        app.character('星际旅行');
         app.run('getSpark()');
         assert.equal(storage.get('writing-spark-feedback-v1'), value);
         assert.match(app.element('feedback-storage-status').innerText, /this visit only/i);
@@ -726,7 +843,7 @@ test('malformed or incompatible saved data is not overwritten and does not break
 
 test('clearing feedback removes only this app’s records and prevents stale rating updates', () => {
     const app = boot({storage: new Map([['unrelated', 'keep me']])});
-    app.character('学生');
+    app.character('星际旅行');
     app.run('getSpark()');
     app.character('学校');
     app.run('getSpark(); rateIdea("helpful"); clearSavedFeedback()');
@@ -740,7 +857,7 @@ test('clearing feedback removes only this app’s records and prevents stale rat
 
 test('the message report preserves missing counts, exact ideas, ratings and multiline notes', () => {
     const app = boot();
-    app.character('学生');
+    app.character('星际旅行');
     app.run('getSpark(); getSpark()');
     app.character('学校');
     app.run('getSpark(); rateIdea("not-helpful")');
@@ -750,7 +867,7 @@ test('the message report preserves missing counts, exact ideas, ratings and mult
     const englishIdea = app.element('spark-display').innerText;
     const message = app.run('getFeedbackMessage()');
     assert.match(message, /Writing Spark feedback/);
-    assert.match(message, /学生.*2 requests/);
+    assert.match(message, /星际旅行.*2 requests/);
     assert(message.includes('Chinese: 学校'));
     assert(message.includes('Suggested word: 学校'));
     assert(message.includes(idea));
@@ -764,7 +881,7 @@ test('the message report preserves missing counts, exact ideas, ratings and mult
 test('Share hands plain text to native sharing without attachments, deleting records or changing the timer', async () => {
     const payloads = [];
     const app = boot({navigator: {share: async payload => payloads.push(payload)}});
-    app.character('学生'); app.run('getSpark()');
+    app.character('星际旅行'); app.run('getSpark()');
     app.character('学校'); app.run('getSpark(); rateIdea("helpful")');
     app.tick(20000);
     const before = app.storage.get('writing-spark-feedback-v1');
@@ -772,7 +889,7 @@ test('Share hands plain text to native sharing without attachments, deleting rec
     assert.equal(payloads.length, 1); // Invoke during the gesture, before awaiting anything else.
     await promise;
     assert.equal(payloads[0].title, 'Writing Spark feedback');
-    assert(payloads[0].text.includes('学生'));
+    assert(payloads[0].text.includes('星际旅行'));
     assert(payloads[0].text.includes('Chinese: 学校'));
     assert.equal(payloads[0].files, undefined);
     assert.equal(payloads[0].url, undefined);
@@ -787,7 +904,7 @@ test('canceling native sharing does not copy feedback or claim it was sent', asy
         share: async () => { throw {name: 'AbortError'}; },
         clipboard: {writeText: async text => copied.push(text)},
     }});
-    app.character('学生'); app.run('getSpark()');
+    app.character('星际旅行'); app.run('getSpark()');
     await app.run('shareFeedback()');
     assert.equal(copied.length, 0);
     assert.match(app.element('feedback-share-status').innerText, /closed/i);
@@ -798,20 +915,20 @@ test('canceling native sharing does not copy feedback or claim it was sent', asy
 test('without native sharing Share copies the message and reports that it was copied', async () => {
     const copied = [];
     const app = boot({navigator: {clipboard: {writeText: async text => copied.push(text)}}});
-    app.character('学生'); app.run('getSpark()');
+    app.character('星际旅行'); app.run('getSpark()');
     await app.run('shareFeedback()');
     assert.equal(copied.length, 1);
-    assert(copied[0].includes('学生'));
+    assert(copied[0].includes('星际旅行'));
     assert.match(app.element('feedback-share-status').innerText, /copied.*paste/i);
     assert.equal(app.element('feedback-copy-fallback').hidden, true);
 });
 
 test('native share failure exposes complete selectable text without losing saved feedback', async () => {
     const app = boot({navigator: {share: async () => { throw {name: 'NotAllowedError'}; }}});
-    app.character('学生'); app.run('getSpark()');
+    app.character('星际旅行'); app.run('getSpark()');
     await app.run('shareFeedback()');
     assert.equal(app.element('feedback-copy-fallback').hidden, false);
-    assert(app.element('feedback-share-text').value.includes('学生'));
+    assert(app.element('feedback-share-text').value.includes('星际旅行'));
     assert.match(app.element('feedback-share-status').innerText, /copy/i);
     assert.equal(app.run('getFeedbackReport().missingWords.length'), 1);
 });
@@ -844,7 +961,7 @@ test('a pending share cannot open a second sheet and clearing feedback removes s
     let finish;
     let calls = 0;
     const app = boot({navigator: {share: () => { calls++; return new Promise(resolve => { finish = resolve; }); }}});
-    app.character('学生'); app.run('getSpark()');
+    app.character('星际旅行'); app.run('getSpark()');
     const pending = app.run('shareFeedback()');
     await app.run('shareFeedback()');
     assert.equal(calls, 1);

@@ -4,7 +4,7 @@ A simple writing helper for children in grades 2–4. Type a Chinese character o
 
 For example, **雨** can suggest **下雨 (rain)** and “Write about walking to school on a rainy morning.” The app supplies a starting situation and a word you could use, leaving the sentence to the child.
 
-The built-in collection has 492 ideas across 164 word entries, covering 197 simplified characters. Suggestions and the available-word lists use simplified Chinese; listed traditional forms are also accepted as input. It is a starter collection of everyday vocabulary, not a complete HSK or Better Immersion curriculum. Unsupported characters or words get a clear message, and **Characters and words with ideas** shows the available inputs. Compound words match as a whole; the app does not substitute ideas for their individual characters. All ideas are local: no AI service, API key, account, or usage costs. Missing words and feedback are saved in this browser; nothing is sent automatically.
+The built-in collection has 969 ideas across 323 word entries, covering 433 simplified characters, including all 117 characters in the published Better Immersion New Edition Level 4 list. Suggestions and the available-word lists use simplified Chinese; listed traditional forms are also accepted as input. Unsupported characters or words get a clear message, and **Characters and words with ideas** shows the available inputs. Compound words match as a whole; the app does not substitute ideas for their individual characters. All ideas are local: no AI service, API key, account, or usage costs. Missing words and feedback are saved in this browser; nothing is sent automatically.
 
 ## Features
 
@@ -19,6 +19,19 @@ The built-in collection has 492 ideas across 164 word entries, covering 197 simp
 *   **English Thinking Cues:** 40 cues across eight strategies: association, memory, people, imagination, senses, details, structure, and speaking. Each new cue uses a different strategy whenever one remains.
 *   **Accessible Controls:** Keyboard controls, zoom support, reduced-motion support, and a sound toggle.
 *   **Feedback for Future Updates:** Missing words are logged automatically. A child can mark an idea **Helpful** or **Didn’t help**, and optionally save a short note. Share feedback as a message or copy it for a later manual update to the collection. A JSON download is also available.
+*   **Better Immersion Reference:** Browse the New Edition character lists for Levels 2–4 by unit. Tap a character with ideas to use it. Each unit shows which characters still need ideas; browsing does not start the timer or log missing words.
+
+## Curriculum Reference
+
+The level/unit memberships in `better-immersion.js` come from Better Chinese LLC's [Better Immersion New Edition Character List, hosted by PGCPS](https://www.pgcps.org/globalassets/schools/elementary/paint-branch/docs---paint-branch/better-immersion-chinese-character-list.pdf), checked October 15, 2026. PDF radical glyphs were normalized to standard Han characters. The app's words and situation ideas are original; the source supplies character/unit memberships only.
+
+| Book level | Units | Listed characters | Characters with ideas |
+| --- | ---: | ---: | ---: |
+| Level 2 | 27 | 151 | 57 |
+| Level 3 | 27 | 225 | 60 |
+| Level 4 | 13 | 117 | 117 |
+
+These are book levels, not a verified map of a school's grades or pacing. SFUSD workbooks may use a different sequence; the app does not claim SFUSD alignment. A complete character list also does not cover every compound word made from those characters. Type the assigned whole word, such as 游记, to check its own ideas. Missing words can be shared for future additions.
 
 ## How to Use
 
@@ -32,7 +45,7 @@ The built-in collection has 492 ideas across 164 word entries, covering 197 simp
 
 The countdown uses elapsed time, including time spent in another tab. When the browser resumes after a delay, the timer catches up to the current round and plays at most one chime. Browsers may suspend background pages, so sound at the exact deadline is only possible while the page is running.
 
-To use the app entirely offline, download `index.html`, `prompts.js`, `character-ideas.js`, and `feedback.js` into the same folder and open `index.html` in a browser. The hosted page requires a connection to load initially; it does not install an offline cache.
+To use the app entirely offline, download `index.html`, `prompts.js`, `curriculum-ideas.js`, `character-ideas.js`, `better-immersion.js`, and `feedback.js` into the same folder and open `index.html` in a browser. The hosted page requires a connection to load initially; it does not install an offline cache. The external source PDF link needs a connection; the unit browser and ideas do not.
 
 ## Using Feedback to Improve the App
 
@@ -51,7 +64,7 @@ With Node.js installed, run `node --test tests/app.test.cjs` for character and c
 ## Deployment
 
 This project is hosted on **GitHub Pages**. To update:
-1.  Edit `character-ideas.js` to add Chinese ideas. Each entry lists `words` (the simplified display word first, followed by optional traditional input aliases), an English `meaning`, and at least three distinct `ideas`. Each complete word form and every individual character in it becomes searchable; suggestions always display the first, simplified form. Multi-character inputs match only listed word forms. Keep situations short, age-appropriate, and clearly connected to the word. Supply an idea, not a finished sentence. Do not map unrelated characters by their radicals.
+1.  Edit `character-ideas.js` or `curriculum-ideas.js` to add Chinese ideas. Each entry lists `words` (the simplified display word first, followed by optional traditional input aliases), an English `meaning`, and at least three distinct `ideas`. Each complete word form and every individual character in it becomes searchable; suggestions always display the first, simplified form. Multi-character inputs match only listed word forms. Keep situations short, age-appropriate, and clearly connected to the word. Supply an idea, not a finished sentence. Do not map unrelated characters by their radicals. Change curriculum memberships only with a verified source, and update the coverage totals above after adding words.
 2.  Edit `prompts.js` for English cues. Each entry has a `strategy` tag and plain `text`.
 3.  Run the checks above.
 4.  Push to GitHub. The site updates automatically.

@@ -4,6 +4,7 @@
 // only. Do not guess from radicals or convert characters automatically.
 // This is a starter collection, not a curriculum.
 const CHARACTER_IDEAS = [
+    ...CURRICULUM_IDEAS,
     // Weather and nature
     { words: ['下雨'], meaning: 'rain', ideas: [
         'Write about walking to school on a rainy morning.',
@@ -584,6 +585,372 @@ const CHARACTER_IDEAS = [
         'Write about finding shade on a hot day.',
         'Write about feeling hot after running a race.'
     ] },
+    // Trips, journals and memories
+    { words: ['游记', '遊記', '游記'], meaning: 'travel journal / account of a trip', ideas: [
+        'Write about a place from a family outing you would describe in a travel journal.',
+        'Write about a surprising moment you would include in a travel journal about a school trip.',
+        'Write about a travel journal you would like to read and the place it describes.'
+    ] },
+    { words: ['日记', '日記'], meaning: 'diary', ideas: [
+        'Write about one moment from today you want to put in your diary.',
+        'Write about where you like to sit when you write in your diary.',
+        'Write about finding an old diary entry about your first day of school.'
+    ] },
+    { words: ['笔记', '筆記'], meaning: 'notes', ideas: [
+        'Write about taking notes while watching a seed grow.',
+        'Write about a drawing you added to your science notes.',
+        'Write about using your notes to remember what a teacher explained.'
+    ] },
+    { words: ['记录', '記錄'], meaning: 'record / write down', ideas: [
+        'Write about recording how much rain falls each day.',
+        'Write about writing down the names of birds you see on a walk.',
+        'Write about keeping a record of the books you finish this month.'
+    ] },
+    { words: ['记得', '記得'], meaning: 'remember', ideas: [
+        'Write about a funny moment you still remember from a trip.',
+        'Write about remembering to bring something important to school.',
+        'Write about a game you remember playing when you were younger.'
+    ] },
+    { words: ['忘记', '忘記'], meaning: 'forget', ideas: [
+        'Write about forgetting an umbrella on a rainy day.',
+        'Write about something you do so you will not forget your homework.',
+        'Write about forgetting the rules of a game and asking a friend.'
+    ] },
+    { words: ['回忆', '回憶'], meaning: 'recall / memory', ideas: [
+        'Write about a happy memory that comes back when you look at a photo.',
+        'Write about remembering a visit with someone you have not seen lately.',
+        'Write about sharing a memory from your first school trip.'
+    ] },
+    { words: ['经历', '經歷'], meaning: 'experience / go through', ideas: [
+        'Write about your experience of trying a new sport for the first time.',
+        'Write about an experience on a trip that taught you something.',
+        'Write about a surprising experience you want to tell a friend about.'
+    ] },
+    { words: ['旅行'], meaning: 'travel / trip', ideas: [
+        'Write about something you would pack for a trip to the mountains.',
+        'Write about a person you would like to travel with.',
+        'Write about something unexpected that happened during a trip.'
+    ] },
+    { words: ['旅游', '旅遊'], meaning: 'travel for pleasure / sightseeing', ideas: [
+        'Write about a place you would like to visit on vacation.',
+        'Write about trying a local food while sightseeing with your family.',
+        'Write about choosing between two places for a vacation.'
+    ] },
+    { words: ['假期'], meaning: 'vacation / school break', ideas: [
+        'Write about something you want to learn during a school break.',
+        'Write about a quiet vacation day spent at home.',
+        'Write about a person you hope to visit during your vacation.'
+    ] },
+    { words: ['周末', '週末'], meaning: 'weekend', ideas: [
+        'Write about a weekend plan you are looking forward to.',
+        'Write about helping with something at home on the weekend.',
+        'Write about a rainy weekend when your plans changed.'
+    ] },
+    { words: ['计划', '計劃'], meaning: 'plan', ideas: [
+        'Write about making a plan for a class picnic.',
+        'Write about planning how to finish a project before Friday.',
+        'Write about changing your plan because a friend has a new idea.'
+    ] },
+    { words: ['准备', '準備'], meaning: 'prepare / get ready', ideas: [
+        'Write about getting your backpack ready for a school trip.',
+        'Write about preparing a small surprise for a friend.',
+        'Write about getting ready to speak in front of your class.'
+    ] },
+    { words: ['出发', '出發'], meaning: 'set off / depart', ideas: [
+        'Write about leaving early for a trip while it is still dark.',
+        'Write about what your family checks before setting off.',
+        'Write about how you feel when the bus departs on a school trip.'
+    ] },
+    { words: ['到达', '到達'], meaning: 'arrive / reach', ideas: [
+        'Write about the first thing you see when you arrive at a campsite.',
+        'Write about reaching the top of a hill after a long walk.',
+        'Write about arriving at a relative\'s home for a visit.'
+    ] },
+    { words: ['参观', '參觀'], meaning: 'visit / tour a place', ideas: [
+        'Write about touring a museum and finding your favorite exhibit.',
+        'Write about visiting a farm to see how vegetables grow.',
+        'Write about a place you would like your class to visit.'
+    ] },
+    { words: ['介绍', '介紹'], meaning: 'introduce / tell someone about', ideas: [
+        'Write about introducing a new friend to your family.',
+        'Write about telling a visitor about your favorite place at school.',
+        'Write about introducing a book you enjoyed to your class.'
+    ] },
+    { words: ['地方'], meaning: 'place', ideas: [
+        'Write about a place where you like to read quietly.',
+        'Write about a place you would show a friend visiting your town.',
+        'Write about a place that looks different at night.'
+    ] },
+    { words: ['城市'], meaning: 'city', ideas: [
+        'Write about something you notice while walking through a city.',
+        'Write about a city you would like to visit and why.',
+        'Write about a park surrounded by busy city streets.'
+    ] },
+    { words: ['乡村', '鄉村'], meaning: 'countryside / village', ideas: [
+        'Write about the sounds you might hear on a morning in the countryside.',
+        'Write about visiting a small village surrounded by fields.',
+        'Write about something you would like to do in the countryside.'
+    ] },
+    { words: ['公园', '公園'], meaning: 'park', ideas: [
+        'Write about choosing a spot for a picnic in a park.',
+        'Write about something interesting you notice on a park path.',
+        'Write about a game you play with friends at the park.'
+    ] },
+    { words: ['博物馆', '博物館'], meaning: 'museum', ideas: [
+        'Write about a museum exhibit you wish you could learn more about.',
+        'Write about a question you would ask a museum guide.',
+        'Write about which museum you would choose for a class visit.'
+    ] },
+    { words: ['动物园', '動物園'], meaning: 'zoo', ideas: [
+        'Write about an animal you would like to observe at a zoo.',
+        'Write about a zoo keeper explaining how an animal is cared for.',
+        'Write about something new you learned during a zoo visit.'
+    ] },
+
+    // Observing places and describing experiences
+    { words: ['植物'], meaning: 'plant', ideas: [
+        'Write about a plant you would like to grow on a windowsill.',
+        'Write about two plants with very different leaves.',
+        'Write about caring for a plant while a neighbor is away.'
+    ] },
+    { words: ['动物', '動物'], meaning: 'animal', ideas: [
+        'Write about an animal you spotted near your home.',
+        'Write about an animal that stays awake at night.',
+        'Write about choosing an animal to learn more about for a project.'
+    ] },
+    { words: ['自然'], meaning: 'nature / natural', ideas: [
+        'Write about something in nature that makes you curious.',
+        'Write about taking a nature walk after it rains.',
+        'Write about a sound from nature you enjoy hearing.'
+    ] },
+    { words: ['环境', '環境'], meaning: 'environment / surroundings', ideas: [
+        'Write about keeping the environment around your school clean.',
+        'Write about the kind of environment a frog needs to live in.',
+        'Write about how your surroundings change when you leave a city.'
+    ] },
+    { words: ['保护', '保護'], meaning: 'protect', ideas: [
+        'Write about protecting a tiny plant from being stepped on.',
+        'Write about a way your class could protect a nearby stream.',
+        'Write about using a cover to protect a library book from rain.'
+    ] },
+    { words: ['风景', '風景'], meaning: 'scenery / view', ideas: [
+        'Write about the view from a train window.',
+        'Write about scenery you would like to paint.',
+        'Write about how the view from a hill changes in winter.'
+    ] },
+    { words: ['景色'], meaning: 'scenery', ideas: [
+        'Write about the colors in the scenery beside a lake.',
+        'Write about scenery you noticed during a walk with your family.',
+        'Write about the scenery outside your window at sunset.'
+    ] },
+    { words: ['景点', '景點'], meaning: 'scenic spot / visitor attraction', ideas: [
+        'Write about a visitor attraction you would recommend in your town.',
+        'Write about choosing which scenic spot to visit first on a trip.',
+        'Write about a famous attraction you want to see in person.'
+    ] },
+    { words: ['海边', '海邊'], meaning: 'seaside', ideas: [
+        'Write about the sounds you hear during a walk by the sea.',
+        'Write about flying a kite at the seaside.',
+        'Write about what you would pack for a day by the sea.'
+    ] },
+    { words: ['沙滩', '沙灘'], meaning: 'beach / sandy shore', ideas: [
+        'Write about building something in the sand at a beach.',
+        'Write about finding unusual footprints on a sandy beach.',
+        'Write about how the beach looks after the tide goes out.'
+    ] },
+    { words: ['照片'], meaning: 'photograph', ideas: [
+        'Write about a photo that reminds you of a funny moment.',
+        'Write about choosing a photo to put in a class display.',
+        'Write about what is happening just outside the edge of a photo.'
+    ] },
+    { words: ['纪念', '紀念'], meaning: 'commemorate / keep as a reminder', ideas: [
+        'Write about keeping a ticket as a reminder of a special trip.',
+        'Write about planting a tree to mark a special day.',
+        'Write about making a card to remember your last day in a class.'
+    ] },
+    { words: ['观察', '觀察'], meaning: 'observe / watch carefully', ideas: [
+        'Write about something you notice while observing ants at work.',
+        'Write about watching a seedling carefully for changes each day.',
+        'Write about what you notice when you observe clouds moving.'
+    ] },
+    { words: ['发现', '發現'], meaning: 'discover / notice', ideas: [
+        'Write about discovering a tiny flower growing through a crack.',
+        'Write about noticing a clue that helps you find a lost toy.',
+        'Write about discovering something unexpected inside an old box.'
+    ] },
+    { words: ['变化', '變化'], meaning: 'change', ideas: [
+        'Write about how a tree changes as autumn arrives.',
+        'Write about changes in your neighborhood since you were younger.',
+        'Write about watching ice change as it warms up.'
+    ] },
+    { words: ['比较', '比較'], meaning: 'compare / relatively', ideas: [
+        'Write about comparing two routes to the playground.',
+        'Write about comparing leaves from two different trees.',
+        'Write about which of two books is easier for you to read.'
+    ] },
+    { words: ['特别', '特別'], meaning: 'special / especially', ideas: [
+        'Write about a gift that is special to you and why.',
+        'Write about a day when you felt especially excited.',
+        'Write about something special your family does together.'
+    ] },
+    { words: ['有趣'], meaning: 'interesting / fun', ideas: [
+        'Write about an interesting fact you learned about an animal.',
+        'Write about a fun game you invented with a friend.',
+        'Write about an interesting object you found on a walk.'
+    ] },
+    { words: ['美丽', '美麗'], meaning: 'beautiful', ideas: [
+        'Write about something beautiful you notice in an ordinary place.',
+        'Write about the colors that make a garden beautiful.',
+        'Write about a beautiful view you want to show someone.'
+    ] },
+    { words: ['安静', '安靜'], meaning: 'quiet', ideas: [
+        'Write about a quiet place where you like to think.',
+        'Write about a classroom becoming quiet when a story begins.',
+        'Write about walking quietly so you can watch a bird.'
+    ] },
+    { words: ['热闹', '熱鬧'], meaning: 'lively / bustling', ideas: [
+        'Write about the lively sounds at a school fair.',
+        'Write about a busy market full of people and food stalls.',
+        'Write about a lively family gathering during a holiday.'
+    ] },
+    { words: ['激动', '激動'], meaning: 'excited / emotionally moved', ideas: [
+        'Write about feeling excited when you see someone you have missed.',
+        'Write about how you feel when your team scores at the last moment.',
+        'Write about feeling moved by a surprise someone prepared for you.'
+    ] },
+    { words: ['感受'], meaning: 'feelings / experience', ideas: [
+        'Write about your feelings after trying something difficult.',
+        'Write about how you feel when you stand beside the sea.',
+        'Write about sharing your feelings after a class trip.'
+    ] },
+    { words: ['原因'], meaning: 'reason / cause', ideas: [
+        'Write about the reason you chose a certain library book.',
+        'Write about figuring out why a classroom plant is drooping.',
+        'Write about the reason your family changed its weekend plans.'
+    ] },
+
+    // Schoolwork, problem solving and reflection
+    { words: ['结果', '結果'], meaning: 'result / outcome', ideas: [
+        'Write about the result of growing two plants in different places.',
+        'Write about a game whose result surprised you.',
+        'Write about what happened as a result of practicing every day.'
+    ] },
+    { words: ['决定', '決定'], meaning: 'decide / decision', ideas: [
+        'Write about deciding what to do with a free afternoon.',
+        'Write about a decision your group makes before starting a project.',
+        'Write about deciding to try again after something goes wrong.'
+    ] },
+    { words: ['选择', '選擇'], meaning: 'choose / choice', ideas: [
+        'Write about choosing one book from a shelf full of interesting books.',
+        'Write about choosing a game that everyone in your group can play.',
+        'Write about choosing what to bring on a short trip.'
+    ] },
+    { words: ['学生', '學生'], meaning: 'student', ideas: [
+        'Write about a new student finding a place to sit at lunch.',
+        'Write about students working together to decorate a classroom.',
+        'Write about something a student could do to welcome a visitor.'
+    ] },
+    { words: ['同学', '同學'], meaning: 'classmate', ideas: [
+        'Write about a classmate who taught you a new game.',
+        'Write about helping a classmate find a missing pencil.',
+        'Write about making a plan with classmates for a school event.'
+    ] },
+    { words: ['教室'], meaning: 'classroom', ideas: [
+        'Write about your favorite corner of the classroom.',
+        'Write about how your classroom looks before everyone arrives.',
+        'Write about something you would like to add to your classroom.'
+    ] },
+    { words: ['作业', '作業'], meaning: 'homework / school assignment', ideas: [
+        'Write about an assignment that let you interview a family member.',
+        'Write about choosing a quiet place to do your homework.',
+        'Write about what you do when a homework question puzzles you.'
+    ] },
+    { words: ['完成'], meaning: 'finish / complete', ideas: [
+        'Write about how you feel after finishing a difficult puzzle.',
+        'Write about completing a class project with your group.',
+        'Write about what you plan to do after you finish a drawing.'
+    ] },
+    { words: ['认真', '認真'], meaning: 'careful / serious about a task', ideas: [
+        'Write about listening carefully to instructions for a new game.',
+        'Write about carefully checking a drawing before giving it as a gift.',
+        'Write about taking your job of caring for a class plant seriously.'
+    ] },
+    { words: ['努力'], meaning: 'work hard / make an effort', ideas: [
+        'Write about working hard to learn a song you enjoy.',
+        'Write about the effort your team puts into building a model.',
+        'Write about something you want to improve and how you practice.'
+    ] },
+    { words: ['进步', '進步'], meaning: 'make progress / improve', ideas: [
+        'Write about noticing progress in your handwriting.',
+        'Write about a skill that has improved since last year.',
+        'Write about a small improvement that makes you proud.'
+    ] },
+    { words: ['帮助', '幫助'], meaning: 'help', ideas: [
+        'Write about helping a younger child learn a game.',
+        'Write about someone who helped you understand a tricky question.',
+        'Write about offering help when a friend drops a pile of books.'
+    ] },
+    { words: ['合作'], meaning: 'cooperate / work together', ideas: [
+        'Write about working together to build a bridge from blocks.',
+        'Write about how your group shares jobs while making a poster.',
+        'Write about a game that needs everyone to cooperate.'
+    ] },
+    { words: ['解决', '解決'], meaning: 'solve / resolve', ideas: [
+        'Write about solving the problem of a tower that keeps falling.',
+        'Write about resolving a disagreement over which game to play.',
+        'Write about finding a way to keep your school papers organized.'
+    ] },
+    { words: ['办法', '辦法'], meaning: 'method / way to deal with something', ideas: [
+        'Write about a way to remember what to pack for school.',
+        'Write about finding a way to carry several books at once.',
+        'Write about a new way to stop a paper boat from tipping over.'
+    ] },
+    { words: ['坚持', '堅持'], meaning: 'persist / keep at something', ideas: [
+        'Write about keeping up your practice of a new skill.',
+        'Write about continuing a difficult puzzle after taking a break.',
+        'Write about a friend who keeps trying to learn a dance.'
+    ] },
+    { words: ['安全'], meaning: 'safe / safety', ideas: [
+        'Write about crossing a street safely with your family.',
+        'Write about choosing a safe place to fly a kite.',
+        'Write about something you check before riding your bicycle.'
+    ] },
+    { words: ['重要'], meaning: 'important', ideas: [
+        'Write about an important item you check for before leaving home.',
+        'Write about why listening to a teammate is important.',
+        'Write about a day that is important to your family.'
+    ] },
+    { words: ['终于', '終於'], meaning: 'finally / at last', ideas: [
+        'Write about finally learning to do something after many tries.',
+        'Write about a long-awaited visitor finally arriving.',
+        'Write about finally finding something you had lost.'
+    ] },
+    { words: ['虽然', '雖然'], meaning: 'although / even though', ideas: [
+        'Write about enjoying a picnic even though the weather was cloudy.',
+        'Write about a small gift that means a lot to you.',
+        'Write about joining a game even though you feel shy.'
+    ] },
+    { words: ['可是'], meaning: 'but / however', ideas: [
+        'Write about wanting to play outside but finding that it is raining.',
+        'Write about a box that looks heavy but is actually empty.',
+        'Write about planning to draw one thing but changing your mind.'
+    ] },
+    { words: ['应该', '應該'], meaning: 'should / ought to', ideas: [
+        'Write about what you should do if you find a lost library book.',
+        'Write about how players should treat each other during a game.',
+        'Write about something you think your class should try together.'
+    ] },
+    { words: ['愿意', '願意'], meaning: 'be willing to / would like to', ideas: [
+        'Write about being willing to try an unfamiliar food.',
+        'Write about volunteering to help a friend practice a song.',
+        'Write about something you would like to do for your community.'
+    ] },
+    { words: ['相信'], meaning: 'believe / trust', ideas: [
+        'Write about believing a friend will keep a promise.',
+        'Write about believing you can learn a difficult skill.',
+        'Write about hearing a surprising story and deciding whether to believe it.'
+    ] },
+
     // Useful sentence words: ideas still leave the wording to the child.
     { words: ['我'], meaning: 'I / me', ideas: [
         'Write about something you are proud of learning.',
