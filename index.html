@@ -417,22 +417,22 @@
     <div class="spark-section">
         <div id="character-entry">
             <label for="character-input">Which Chinese character or word are you writing about?</label>
-            <input id="character-input" type="text" lang="zh" placeholder="雨 or 学校" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="character-hint character-error" aria-invalid="false">
+            <input id="character-input" type="text" lang="zh-Hans" placeholder="雨 or 学校" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="character-hint character-error" aria-invalid="false">
             <p id="character-hint">Type a character or a whole word with your Chinese keyboard, then ask for an idea.</p>
             <p id="character-error" role="status" aria-live="polite"></p>
             <details id="character-coverage">
                 <summary>Characters and words with ideas</summary>
                 <p><strong>Words</strong></p>
-                <p id="supported-words" lang="zh" tabindex="0"></p>
+                <p id="supported-words" lang="zh-Hans" tabindex="0"></p>
                 <p><strong>Characters</strong></p>
-                <p id="supported-characters" lang="zh" tabindex="0"></p>
+                <p id="supported-characters" lang="zh-Hans" tabindex="0"></p>
             </details>
         </div>
         <div class="card-container">
             <div class="spark-card" id="main-card" role="status" aria-live="polite" aria-atomic="true">
                 <span class="spark-label" id="card-label">Sentence idea</span>
                 <div id="idea-context" hidden>
-                    A word you could use: <strong id="idea-word" lang="zh"></strong>
+                    A word you could use: <strong id="idea-word" lang="zh-Hans"></strong>
                     <span id="idea-meaning"></span>
                 </div>
                 <div class="spark-text" id="spark-display">Type a character or word above to find an idea.</div>
@@ -580,10 +580,11 @@
             event.preventDefault();
             getSpark();
         });
+        const words = CHARACTER_IDEAS.map(entry => entry.words[0]);
         document.getElementById('supported-characters').innerText =
-            [...CHARACTER_IDEAS_BY_CHARACTER.keys()].sort().join(' ');
+            [...new Set(words.join(''))].sort().join(' ');
         document.getElementById('supported-words').innerText =
-            [...CHARACTER_IDEAS_BY_WORD.keys()].sort().join(' ');
+            [...new Set(words.filter(word => [...word].length > 1))].sort().join(' ');
         resetSparkDisplay();
     };
 
@@ -651,7 +652,6 @@
                 return;
             }
             deckKey = 'character:' + text;
-            document.getElementById('card-label').innerText = `An idea for「${text}」`;
         } else {
             list = PROMPTS_CONFIG.english;
         }

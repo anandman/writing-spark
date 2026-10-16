@@ -459,13 +459,14 @@ test('English mode hides character controls and works without Chinese input', ()
     assert.equal(app.element('idea-context').hidden, true);
 });
 
-test('explicit traditional forms also give relevant ideas', () => {
+test('traditional input gives relevant ideas with simplified words', () => {
     const app = boot();
-    for (const character of ['學', '樂', '貓', '書', '愛']) {
+    for (const [character, simplified] of [['學', '学'], ['樂', '乐'], ['貓', '猫'], ['書', '书'], ['愛', '爱']]) {
         app.character(character);
         app.run('getSpark()');
         assert.equal(app.element('idea-context').hidden, false, character);
-        assert(app.element('idea-word').innerText.includes(character), character);
+        assert(app.element('idea-word').innerText.includes(simplified), character);
+        assert(!app.element('card-label').innerText.includes(character), character);
         assert(app.element('spark-display').innerText.length > 10);
     }
 });
@@ -474,7 +475,8 @@ test('every listed character has distinct usable ideas and matching words', () =
     const app = boot();
     const characters = app.element('supported-characters').innerText.replace(/\s/g, '');
     assert(characters.includes('雨'));
-    assert(characters.includes('學'));
+    assert(characters.includes('学'));
+    assert.doesNotMatch(characters, /[學樂貓書愛]/);
     assert.equal(new Set(characters).size, [...characters].length);
     for (const character of characters) {
         const cards = app.run(`ideasForText(${JSON.stringify(character)})`);
@@ -493,10 +495,10 @@ test('compound words get ideas for the whole word, including traditional and lon
     const app = boot();
     for (const [input, word, topic] of [
         ['  学校\n', '学校', /school/i],
-        ['學校', '學校', /school/i],
+        ['學校', '学校', /school/i],
         ['朋友', '朋友', /friend/i],
         ['快乐', '快乐', /happy/i],
-        ['快樂', '快樂', /happy/i],
+        ['快樂', '快乐', /happy/i],
         ['好朋友', '好朋友', /friend/i],
     ]) {
         app.character(input);
@@ -574,7 +576,8 @@ test('every listed word is available as a complete word in its displayed script'
     const app = boot();
     const words = app.element('supported-words').innerText.trim().split(/\s+/);
     assert(words.includes('学校'));
-    assert(words.includes('學校'));
+    assert(!words.includes('學校'));
+    assert(!words.includes('快樂'));
     assert(words.includes('好朋友'));
     assert.equal(new Set(words).size, words.length);
     for (const word of words) {
@@ -583,6 +586,42 @@ test('every listed word is available as a complete word in its displayed script'
         assert.equal(new Set(cards.map(card => card.text)).size, cards.length, word);
         for (const card of cards) assert.equal(card.word, word);
     }
+});
+
+test('every input alias returns simplified words and coverage lists only simplified forms', () => {
+    const app = boot();
+    const entries = app.run('CHARACTER_IDEAS');
+    const simplifiedWords = new Set(entries.map(entry => entry.words[0]));
+    const simplifiedCharacters = new Set([...simplifiedWords].join(''));
+    assert.deepEqual(
+        new Set(app.element('supported-characters').innerText.split(' ')),
+        simplifiedCharacters
+    );
+    assert.deepEqual(
+        new Set(app.element('supported-words').innerText.split(' ')),
+        new Set([...simplifiedWords].filter(word => [...word].length > 1))
+    );
+    for (const entry of entries) {
+        for (const alias of entry.words) {
+            for (const input of new Set([alias, ...alias])) {
+                const cards = app.run(`ideasForText(${JSON.stringify(input)})`);
+                assert(cards.length >= 3, input);
+                assert(cards.every(card => simplifiedWords.has(card.word)), input);
+                if ([...input].length > 1) {
+                    assert(cards.every(card => card.word === entry.words[0]), input);
+                }
+            }
+        }
+    }
+});
+
+test('feedback preserves the typed input alongside the simplified suggestion', () => {
+    const app = boot();
+    app.character('學校');
+    app.run('getSpark(); rateIdea("helpful")');
+    const record = boot({storage: app.storage}).run('getFeedbackReport().ideaFeedback[0]');
+    assert.equal(record.input, '學校');
+    assert.equal(record.word, '学校');
 });
 
 test('unknown words are counted and survive reload while invalid and known inputs are excluded', () => {

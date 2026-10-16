@@ -4,7 +4,7 @@ A simple writing helper for children in grades 2–4. Type a Chinese character o
 
 For example, **雨** can suggest **下雨 (rain)** and “Write about walking to school on a rainy morning.” The app supplies a starting situation and a word you could use, leaving the sentence to the child.
 
-The built-in collection has 492 ideas across 164 word entries, covering 255 characters including explicit simplified and traditional forms. It is a starter collection of everyday vocabulary, not a complete HSK or Better Immersion curriculum. Unsupported characters or words get a clear message, and **Characters and words with ideas** shows the available inputs. Compound words match as a whole; the app does not substitute ideas for their individual characters. All ideas are local: no AI service, API key, account, or usage costs. Missing words and feedback are saved in this browser; nothing is sent automatically.
+The built-in collection has 492 ideas across 164 word entries, covering 197 simplified characters. Suggestions and the available-word lists use simplified Chinese; listed traditional forms are also accepted as input. It is a starter collection of everyday vocabulary, not a complete HSK or Better Immersion curriculum. Unsupported characters or words get a clear message, and **Characters and words with ideas** shows the available inputs. Compound words match as a whole; the app does not substitute ideas for their individual characters. All ideas are local: no AI service, API key, account, or usage costs. Missing words and feedback are saved in this browser; nothing is sent automatically.
 
 ## Features
 
@@ -51,7 +51,7 @@ With Node.js installed, run `node --test tests/app.test.cjs` for character and c
 ## Deployment
 
 This project is hosted on **GitHub Pages**. To update:
-1.  Edit `character-ideas.js` to add Chinese ideas. Each entry lists `words` (explicit simplified/traditional forms), an English `meaning`, and at least three distinct `ideas`. Each complete word form and every individual character in it becomes searchable. Multi-character inputs match only listed word forms, including their explicit traditional variants. Keep situations short, age-appropriate, and clearly connected to the word. Supply an idea, not a finished sentence. Do not map unrelated characters by their radicals.
+1.  Edit `character-ideas.js` to add Chinese ideas. Each entry lists `words` (the simplified display word first, followed by optional traditional input aliases), an English `meaning`, and at least three distinct `ideas`. Each complete word form and every individual character in it becomes searchable; suggestions always display the first, simplified form. Multi-character inputs match only listed word forms. Keep situations short, age-appropriate, and clearly connected to the word. Supply an idea, not a finished sentence. Do not map unrelated characters by their radicals.
 2.  Edit `prompts.js` for English cues. Each entry has a `strategy` tag and plain `text`.
 3.  Run the checks above.
 4.  Push to GitHub. The site updates automatically.

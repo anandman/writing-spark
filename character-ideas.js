@@ -1,7 +1,8 @@
 // Original sentence ideas for grades 2–4, not completed example sentences.
 // Each word makes its characters' connection to the situation explicit.
-// List traditional forms explicitly; do not guess from radicals or convert
-// characters automatically. This is a starter collection, not a curriculum.
+// Put the simplified display word first; traditional forms are input aliases
+// only. Do not guess from radicals or convert characters automatically.
+// This is a starter collection, not a curriculum.
 const CHARACTER_IDEAS = [
     // Weather and nature
     { words: ['下雨'], meaning: 'rain', ideas: [
@@ -834,19 +835,19 @@ const CHARACTER_IDEAS = [
 const CHARACTER_IDEAS_BY_CHARACTER = new Map();
 const CHARACTER_IDEAS_BY_WORD = new Map();
 for (const entry of CHARACTER_IDEAS) {
-    for (const word of entry.words) {
-        if ([...word].length === 1) continue;
-        const cards = CHARACTER_IDEAS_BY_WORD.get(word) || [];
+    const word = entry.words[0];
+    for (const form of entry.words) {
+        if ([...form].length === 1) continue;
+        const cards = CHARACTER_IDEAS_BY_WORD.get(form) || [];
         cards.push(...entry.ideas.map(text => ({
-            strategy: entry.words[0], word, meaning: entry.meaning, text
+            strategy: word, word, meaning: entry.meaning, text
         })));
-        CHARACTER_IDEAS_BY_WORD.set(word, cards);
+        CHARACTER_IDEAS_BY_WORD.set(form, cards);
     }
     for (const character of new Set(entry.words.join(''))) {
-        const word = entry.words.find(form => form.includes(character));
         const cards = CHARACTER_IDEAS_BY_CHARACTER.get(character) || [];
         cards.push(...entry.ideas.map(text => ({
-            strategy: entry.words[0], word, meaning: entry.meaning, text
+            strategy: word, word, meaning: entry.meaning, text
         })));
         CHARACTER_IDEAS_BY_CHARACTER.set(character, cards);
     }
@@ -854,7 +855,8 @@ for (const entry of CHARACTER_IDEAS) {
 
 function ideasForText(text) {
     // A single character can suggest a word containing it. Compounds must
-    // match as a whole, in the entered script, without splitting into characters.
+    // match a listed form as a whole, without splitting into characters.
+    // All returned words use the simplified form, including for alias input.
     const index = [...text].length === 1 ? CHARACTER_IDEAS_BY_CHARACTER : CHARACTER_IDEAS_BY_WORD;
     return index.get(text) || [];
 }
