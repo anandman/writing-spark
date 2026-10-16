@@ -97,9 +97,40 @@
         /* --- LEFT COLUMN: SPARK --- */
         .spark-section {
             width: 100%;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        #character-entry { width: 100%; margin-bottom: 20px; }
+        #character-entry label { display: block; font-weight: bold; margin-bottom: 8px; }
+        #character-input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #c6bda8;
+            border-radius: 12px;
+            background: white;
+            color: #2c3e50;
+            font: inherit;
+            font-size: 1.6rem;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        #character-input[aria-invalid="true"] { border-color: #a92738; }
+        #character-hint, #character-error { margin: 8px 0; font-size: 0.9rem; line-height: 1.4; }
+        #character-error { color: #a92738; }
+        #character-error:empty { display: none; }
+        #character-coverage { font-size: 0.85rem; line-height: 1.5; }
+        #character-coverage summary { cursor: pointer; padding: 6px 0; }
+        #supported-characters {
+            max-height: 9em;
+            overflow-y: auto;
+            line-height: 2;
+            margin: 6px 0;
+            user-select: text;
+            -webkit-user-select: text;
         }
 
         .card-container {
@@ -123,14 +154,18 @@
         }
 
         .spark-label {
-            position: absolute;
-            top: 20px;
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: #aaa;
+            color: #687579;
             font-weight: bold;
+            margin-bottom: 12px;
         }
+
+        #idea-context { margin-bottom: 14px; line-height: 1.4; }
+        #idea-word { font-size: 1.6rem; color: #b42a6b; }
+        #idea-meaning { display: block; font-size: 0.95rem; }
+        #writing-reminder { text-align: center; font-size: 0.9rem; line-height: 1.5; }
 
         .spark-text {
             font-size: 1.8rem;
@@ -349,13 +384,28 @@
 <main>
     <!-- Left: Spark Card -->
     <div class="spark-section">
+        <div id="character-entry">
+            <label for="character-input">Which Chinese character are you writing about?</label>
+            <input id="character-input" type="text" lang="zh" placeholder="雨" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="character-hint character-error" aria-invalid="false">
+            <p id="character-hint">Type one character with your Chinese keyboard, then ask for an idea.</p>
+            <p id="character-error" role="status" aria-live="polite"></p>
+            <details id="character-coverage">
+                <summary>Characters with ideas</summary>
+                <p id="supported-characters" lang="zh" tabindex="0"></p>
+            </details>
+        </div>
         <div class="card-container">
-            <div class="spark-card" id="main-card">
-                <span class="spark-label" id="card-label">Sentence Expander</span>
-                <div class="spark-text" id="spark-display" role="status" aria-live="polite" aria-atomic="true">Tap button for an idea...</div>
+            <div class="spark-card" id="main-card" role="status" aria-live="polite" aria-atomic="true">
+                <span class="spark-label" id="card-label">Sentence idea</span>
+                <div id="idea-context" hidden>
+                    A word you could use: <strong id="idea-word" lang="zh"></strong>
+                    <span id="idea-meaning"></span>
+                </div>
+                <div class="spark-text" id="spark-display">Type a character above to find an idea.</div>
             </div>
         </div>
-        <button class="big-btn" onclick="getSpark()">✨ Give me an Idea</button>
+        <button class="big-btn" id="idea-button" type="button" onclick="getSpark()">✨ Give me an idea</button>
+        <p id="writing-reminder">Use the idea to write your own sentence on paper.</p>
     </div>
 
     <!-- Right: Visual Timer -->
@@ -411,6 +461,7 @@
 </dialog>
 
 <script src="prompts.js"></script>
+<script src="character-ideas.js"></script>
 <script>
     // --- STATE ---
     let currentMode = 'chinese';
@@ -423,8 +474,9 @@
     let audioCtx = null;
     let audioOutput = null;
     let soundMuted = false;
-    const promptDecks = { chinese: [], english: [] };
-    const lastPrompts = { chinese: null, english: null };
+    const promptDecks = {};
+    const lastPrompts = {};
+    let characterComposing = false;
 
     // --- INIT ---
     window.onload = function() {
@@ -436,6 +488,22 @@
         document.getElementById('zen-curtain').addEventListener('close', () => {
             document.getElementById('btn-zen').setAttribute('aria-expanded', 'false');
         });
+        const input = document.getElementById('character-input');
+        input.addEventListener('compositionstart', () => { characterComposing = true; });
+        input.addEventListener('compositionend', () => { characterComposing = false; });
+        input.addEventListener('input', () => {
+            if (currentMode === 'chinese') resetSparkDisplay();
+        });
+        // A plain input (outside a form) avoids implicit submission when an
+        // IME confirms a candidate. 229 also covers older browser IME events.
+        input.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' || event.isComposing || characterComposing || event.keyCode === 229) return;
+            event.preventDefault();
+            getSpark();
+        });
+        document.getElementById('supported-characters').innerText =
+            [...CHARACTER_IDEAS_BY_CHARACTER.keys()].sort().join(' ');
+        resetSparkDisplay();
     };
 
     document.addEventListener('visibilitychange', () => {
@@ -455,28 +523,68 @@
         document.getElementById('btn-chinese').setAttribute('aria-pressed', String(mode === 'chinese'));
         document.getElementById('btn-english').setAttribute('aria-pressed', String(mode === 'english'));
         
-        const label = document.getElementById('card-label');
-        const text = document.getElementById('spark-display');
-        text.innerText = "Ready?";
-        text.classList.remove('fade-in'); 
-        
-        if (mode === 'chinese') {
-            label.innerText = "Sentence Expander";
-        } else {
-            label.innerText = "Story Helper";
-        }
+        document.getElementById('character-entry').hidden = mode !== 'chinese';
+        document.getElementById('writing-reminder').innerText = mode === 'chinese'
+            ? 'Use the idea to write your own sentence on paper.'
+            : 'Use the suggestion to keep your own story moving.';
+        resetSparkDisplay();
+    }
+
+    function resetSparkDisplay() {
+        document.getElementById('card-label').innerText = currentMode === 'chinese' ? 'Sentence idea' : 'Story Helper';
+        const display = document.getElementById('spark-display');
+        display.innerText = currentMode === 'chinese'
+            ? 'Type a character above, then ask for an idea.' : 'Ready for a story idea?';
+        display.classList.remove('fade-in');
+        document.getElementById('idea-context').hidden = true;
+        document.getElementById('idea-word').innerText = '';
+        document.getElementById('idea-meaning').innerText = '';
+        document.getElementById('idea-button').innerText = '✨ Give me an idea';
+        document.getElementById('character-error').innerText = '';
+        document.getElementById('character-input').setAttribute('aria-invalid', 'false');
     }
 
     function getSpark() {
-        if (typeof PROMPTS_CONFIG === 'undefined') return;
-        const list = PROMPTS_CONFIG[currentMode];
+        let list;
+        let deckKey = currentMode;
+        if (currentMode === 'chinese') {
+            if (characterComposing) return;
+            const input = document.getElementById('character-input');
+            const character = input.value.trim();
+            resetSparkDisplay();
+            let error = '';
+            if (!/^\p{Script=Han}$/u.test(character)) {
+                error = 'Type one Chinese character, such as 雨 or 猫.';
+            } else {
+                list = ideasForCharacter(character);
+                if (!list.length) error = `I don't have an idea for「${character}」yet. Try another character, or look in “Characters with ideas.”`;
+            }
+            if (error) {
+                input.setAttribute('aria-invalid', 'true');
+                document.getElementById('character-error').innerText = error;
+                input.focus();
+                return;
+            }
+            deckKey = 'character:' + character;
+            document.getElementById('card-label').innerText = `An idea for「${character}」`;
+        } else {
+            list = PROMPTS_CONFIG.english;
+        }
         if (!list || !list.length) return;
 
-        // Reset and start timer automatically when getting a new spark
+        const randomSpark = nextPrompt(deckKey, list);
+        const context = document.getElementById('idea-context');
+        context.hidden = currentMode !== 'chinese';
+        if (currentMode === 'chinese') {
+            document.getElementById('idea-word').innerText = randomSpark.word;
+            document.getElementById('idea-meaning').innerText = randomSpark.meaning;
+        }
+        document.getElementById('idea-button').innerText = '✨ Try another idea';
+
+        // Only a successfully selected idea restarts the try-and-switch timer.
         resetTimer();
         startTimer();
 
-        const randomSpark = nextPrompt(currentMode, list);
         const display = document.getElementById('spark-display');
         display.classList.remove('fade-in');
         void display.offsetWidth; 
@@ -486,7 +594,7 @@
 
     function nextPrompt(mode, list) {
         if (!list.length) return null;
-        const deck = promptDecks[mode];
+        const deck = promptDecks[mode] || (promptDecks[mode] = []);
         if (!deck.length) {
             deck.push(...list);
             for (let i = deck.length - 1; i > 0; i--) {

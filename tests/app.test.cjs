@@ -7,7 +7,8 @@ const vm = require('node:vm');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const appSource = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const promptSource = fs.readFileSync(path.join(root, 'prompts.js'), 'utf8');
+const scriptSources = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]
+    .map(match => fs.readFileSync(path.join(root, match[1]), 'utf8'));
 
 // Run the real app with a controllable clock and minimal browser/audio adapters.
 function boot({ audio = true, resumeFails = false } = {}) {
@@ -24,14 +25,15 @@ function boot({ audio = true, resumeFails = false } = {}) {
             const classes = new Set();
             elements.set(id, {
                 innerText: '', innerHTML: '', offsetWidth: 0,
-                attributes: {}, value: '', open: false,
+                attributes: {}, value: '', open: false, hidden: false, listeners: new Map(),
                 classList: {
                     add: (...names) => names.forEach(name => classes.add(name)),
                     remove: (...names) => names.forEach(name => classes.delete(name)),
                     toggle(name, force) { if (force) classes.add(name); else classes.delete(name); },
                 },
                 setAttribute(name, value) { this.attributes[name] = value; },
-                addEventListener() {},
+                addEventListener(name, fn) { this.listeners.set(name, fn); },
+                dispatch(name, event = {}) { this.listeners.get(name)?.(event); },
                 setCustomValidity(message) { this.validationMessage = message; },
                 showModal() { this.open = true; },
                 close() { this.open = false; },
@@ -83,11 +85,15 @@ function boot({ audio = true, resumeFails = false } = {}) {
         clearInterval(id) { intervals.delete(id); },
     });
     const run = code => vm.runInContext(code, context);
-    run(promptSource);
+    scriptSources.forEach(run);
     run(appSource);
     run('window.onload()');
     return {
         run, element, notes, events,
+        character(value) {
+            element('character-input').value = value;
+            element('character-input').dispatch('input');
+        },
         elapse(ms) { now += ms; },
         tick(ms) { now += ms; [...intervals.values()].forEach(fn => fn()); },
         digital: () => element('digital-timer').innerText,
@@ -175,12 +181,13 @@ test('reset stops the timer without playing overdue alarms', () => {
 
 test('new ideas restart the configured timer and retain a single interval', () => {
     const app = boot();
+    app.character('雨');
     app.run('getSpark()');
     app.tick(12500);
     app.run('getSpark()');
     assert.equal(app.digital(), '05:00');
     assert.equal(app.intervals(), 1);
-    assert.equal(app.run('PROMPTS_CONFIG.chinese.some(prompt => prompt.text === document.getElementById("spark-display").innerText)'), true);
+    assert.match(app.element('spark-display').innerText, /rain|puddle|umbrella/i);
 });
 
 test('+1m preserves elapsed fractions, starts a paused timer, and caps at 10 minutes', () => {
@@ -226,10 +233,10 @@ test('unavailable or rejected audio does not prevent the timer from looping', as
     }
 });
 
-test('each mode shows every prompt before repeating, with varied strategies across refills', () => {
+test('English shows every prompt before repeating, with varied strategies across refills', () => {
     const app = boot();
     app.run('let seed = 42; Math.random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296)');
-    for (const mode of ['chinese', 'english']) {
+    for (const mode of ['english']) {
         const count = app.run(`PROMPTS_CONFIG.${mode}.length`);
         const draw = () => app.run(`nextPrompt('${mode}', PROMPTS_CONFIG.${mode})`);
         let previous;
@@ -245,9 +252,9 @@ test('each mode shows every prompt before repeating, with varied strategies acro
     }
 });
 
-test('default decks keep all eight approaches available throughout each round', () => {
+test('the English deck keeps all eight approaches available throughout each round', () => {
     const app = boot();
-    for (const mode of ['chinese', 'english']) {
+    for (const mode of ['english']) {
         const count = app.run(`PROMPTS_CONFIG.${mode}.length`);
         const strategies = app.run(`new Set(PROMPTS_CONFIG.${mode}.map(prompt => prompt.strategy)).size`);
         for (let i = 0; i < count; i += strategies) {
@@ -300,7 +307,7 @@ test('single-category and single-card decks stay usable and avoid preventable re
 
 test('prompt data has usable strategy tags and distinct plain-text cues', () => {
     const app = boot();
-    for (const mode of ['chinese', 'english']) {
+    for (const mode of ['english']) {
         const cards = app.run(`PROMPTS_CONFIG.${mode}`);
         assert(cards.length > 0);
         assert.equal(new Set(cards.map(card => card.text)).size, cards.length);
@@ -316,6 +323,7 @@ test('prompt data has usable strategy tags and distinct plain-text cues', () => 
 
 test('switching modes preserves each deck and announces the selected mode', () => {
     const app = boot();
+    app.character('雨');
     app.run('getSpark()');
     const first = app.element('spark-display').innerText;
     app.run('setMode("english"); getSpark(); setMode("chinese"); getSpark()');
@@ -326,11 +334,136 @@ test('switching modes preserves each deck and announces the selected mode', () =
 
 test('timer completion leaves the current suggestion and deck in place', () => {
     const app = boot();
+    app.character('雨');
     app.run('getSpark()');
     const prompt = app.element('spark-display').innerText;
-    const remaining = app.run('promptDecks.chinese.length');
+    const remaining = app.run('promptDecks["character:雨"].length');
     app.tick(300000);
     assert.equal(app.element('spark-display').innerText, prompt);
-    assert.equal(app.run('promptDecks.chinese.length'), remaining);
+    assert.equal(app.run('promptDecks["character:雨"].length'), remaining);
     assert.equal(app.notes.length, 6);
+});
+
+test('a typed character gets a related situation and a word that uses it', () => {
+    const app = boot();
+    app.character('  雨\n');
+    const seen = new Set();
+    let previous;
+    for (let i = 0; i < 6; i++) {
+        app.run('getSpark()');
+        const idea = app.element('spark-display').innerText;
+        assert.equal(app.element('idea-word').innerText, '下雨');
+        assert.match(idea, /rain|puddle|umbrella/i);
+        assert.notEqual(idea, previous);
+        if (i < 3) seen.add(idea);
+        previous = idea;
+    }
+    assert.equal(seen.size, 3);
+    assert.equal(app.element('idea-button').innerText, '✨ Try another idea');
+    assert.equal(app.element('idea-context').hidden, false);
+});
+
+test('invalid and missing characters do not start a timer or show an unrelated idea', () => {
+    const app = boot();
+    for (const value of ['', ' ', 'yu', '雨天', '雨!', '🌧', '<img>', '1']) {
+        app.character(value);
+        app.run('getSpark()');
+        assert.equal(app.intervals(), 0, value);
+        assert.equal(app.element('character-input').attributes['aria-invalid'], 'true');
+        assert.match(app.element('character-error').innerText, /one Chinese character/i);
+        assert.equal(app.element('idea-context').hidden, true);
+    }
+});
+
+test('unknown Han characters have honest feedback and cannot leave a stale idea', () => {
+    const app = boot();
+    app.character('雨');
+    app.run('getSpark()');
+    app.tick(20000);
+    for (const value of ['龘', '𠮷']) {
+        app.character(value);
+        app.run('getSpark()');
+        assert.match(app.element('character-error').innerText, /don't have an idea.*yet/i);
+        assert(app.element('character-error').innerText.includes(value));
+        assert.doesNotMatch(app.element('spark-display').innerText, /rain|puddle|umbrella/i);
+        assert.equal(app.element('idea-context').hidden, true);
+        assert.equal(app.digital(), '04:40');
+    }
+});
+
+test('changing a character clears the old card and preserves each character deck', () => {
+    const app = boot();
+    app.character('雨');
+    app.run('getSpark()');
+    const first = app.element('spark-display').innerText;
+    app.character('猫');
+    assert.notEqual(app.element('spark-display').innerText, first);
+    assert.equal(app.element('idea-context').hidden, true);
+    assert.match(app.element('idea-button').innerText, /Give me an idea/);
+    app.run('getSpark()');
+    assert.equal(app.element('idea-word').innerText, '猫');
+    assert.match(app.element('spark-display').innerText, /cat|kitten/i);
+    app.character('雨');
+    app.run('getSpark()');
+    assert.notEqual(app.element('spark-display').innerText, first);
+    assert.equal(app.element('idea-word').innerText, '下雨');
+});
+
+test('Chinese composition and candidate-confirmation Enter cannot request an idea', () => {
+    const app = boot();
+    const input = app.element('character-input');
+    app.character('雨');
+    input.dispatch('compositionstart');
+    input.dispatch('keydown', { key: 'Enter', isComposing: false });
+    app.run('getSpark()');
+    assert.equal(app.intervals(), 0);
+    input.dispatch('compositionend');
+    input.dispatch('keydown', { key: 'Enter', isComposing: true });
+    input.dispatch('keydown', { key: 'Enter', keyCode: 229 });
+    assert.equal(app.intervals(), 0);
+    input.dispatch('keydown', { key: 'Enter', preventDefault() {} });
+    assert.equal(app.intervals(), 1);
+    assert.equal(app.element('idea-word').innerText, '下雨');
+});
+
+test('English mode hides character controls and works without Chinese input', () => {
+    const app = boot();
+    app.run('setMode("english"); getSpark()');
+    assert.equal(app.element('character-entry').hidden, true);
+    assert.equal(app.element('idea-context').hidden, true);
+    assert.equal(app.intervals(), 1);
+    assert.equal(app.run('PROMPTS_CONFIG.english.some(card => card.text === document.getElementById("spark-display").innerText)'), true);
+    app.run('setMode("chinese")');
+    assert.equal(app.element('character-entry').hidden, false);
+    assert.equal(app.element('idea-context').hidden, true);
+});
+
+test('explicit traditional forms also give relevant ideas', () => {
+    const app = boot();
+    for (const character of ['學', '樂', '貓', '書', '愛']) {
+        app.character(character);
+        app.run('getSpark()');
+        assert.equal(app.element('idea-context').hidden, false, character);
+        assert(app.element('idea-word').innerText.includes(character), character);
+        assert(app.element('spark-display').innerText.length > 10);
+    }
+});
+
+test('every listed character has distinct usable ideas and matching words', () => {
+    const app = boot();
+    const characters = app.element('supported-characters').innerText.replace(/\s/g, '');
+    assert(characters.includes('雨'));
+    assert(characters.includes('學'));
+    assert.equal(new Set(characters).size, [...characters].length);
+    for (const character of characters) {
+        const cards = app.run(`ideasForCharacter(${JSON.stringify(character)})`);
+        assert(cards.length >= 3, character);
+        assert.equal(new Set(cards.map(card => card.text)).size, cards.length, character);
+        for (const card of cards) {
+            assert(card.word.includes(character), character);
+            assert(card.meaning.trim());
+            assert(card.text.trim().length > 10);
+            assert.doesNotMatch(card.text, /<[^>]*>|[。！？]/);
+        }
+    }
 });
